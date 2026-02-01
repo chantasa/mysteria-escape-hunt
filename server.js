@@ -150,4 +150,184 @@ app.get("/login", (req, res) => {
   res.send(layout("Log ind", `
     <div class="card">
       <h1>Mysteria – Spil-login</h1>
-      <p class="muted">Indtast jeres holdkode (fx <cod
+      <p class="muted">Indtast jeres holdkode (fx <code>HOLD3</code>).</p>
+      <form method="POST" action="/login">
+        <label class="muted">Holdkode</label>
+        <input name="team_code" placeholder="HOLD1" autocomplete="off" required />
+        <button type="submit" style="margin-top:10px;">Start</button>
+      </form>
+      <p class="muted small" style="margin-top:12px;">
+        GM-dashboard: <code>/admin?key=...</code>
+      </p>
+    </div>
+  `));
+});
+
+// Login handler
+app.post("/login", (req, res) => {
+  const code = normalizeCode(req.body.team_code);
+  if (!teams[code]) {
+    return res.status(400).send(layout("Forkert holdkode", `
+      <div class="card bad">
+        <h2>❌ Holdkoden findes ikke</h2>
+        <p class="muted">Tjek at I har skrevet den rigtigt (fx <code>HOLD1</code>).</p>
+        <a class="btn" href="/login">Prøv igen</a>
+      </div>
+    `));
+  }
+  res.redirect(`/t/${encodeURIComponent(code)}`);
+});
+
+// Team oversigt
+app.get("/t/:teamCode", (req, res) => {
+  const code = normalizeCode(req.params.teamCode);
+  const team = teams[code];
+  if (!team) return res.status(404).send(layout("Ukendt hold", `<div class="card"><h1>Ukendt hold</h1></div>`));
+
+  const list = POSTS.map(p => {
+    const solved = team.solved.has(p.id);
+    return `
+      <div class="card">
+        <h2>${escapeHtml(p.title)}</h2>
+        <p class="muted">${solved ? "✅ Løst (point givet)" : "Ikke løst endnu"}</p>
+        <a class="btn" href="/t/${encodeURIComponent(code)}/p/${p.id}">Gå til posten</a>
+      </div>
+    `;
+  }).join("");
+
+  res.send(layout(team.name, `
+    <div class="card">
+      <h1>${escapeHtml(team.name)}</h1>
+      <p class="muted">Holdkode: <code>${escapeHtml(code)}</code></p>
+      <p class="muted">Point: <code>${team.score}</code></p>
+      <div class="row">
+        <a class="btn" href="/login">Skift hold</a>
+      </div>
+    </div>
+    ${list}
+  `));
+});
+
+// Post side
+app.get("/t/:teamCode/p/:postId", (req, res) => {
+  const code = normalizeCode(req.params.teamCode);
+  const team = teams[code];
+  const post = getPost(req.params.postId);
+  if (!team || !post) return res.status(404).send(layout("Ikke fundet", `<div class="card"><h1>Ikke fundet</h1></div>`));
+
+  const options = post.options.map((o, i) => `<option value="${i}">${escapeHtml(o)}</option>`).join("");
+  const alreadySolved = team.solved.has(post.id);
+
+  res.send(layout(post.title, `
+    <div class="card">
+      <div class="row">
+        <a class="btn" href="/t/${encodeURIComponent(code)}">← Tilbage</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>${escapeHtml(post.title)}</h1>
+      <p>${escapeHtml(post.question)}</p>
+      <p class="muted">${alreadySolved ? "I har allerede løst denne post (ingen ekstra point)." : "Svar for at få feedback og ledetråd."}</p>
+
+      <form method="POST" action="/t/${encodeURIComponent(code)}/p/${post.id}">
+        <label class="muted">Vælg svar</label>
+        <select name="answer_index" required>${options}</select>
+        <button type="submit" style="margin-top:10px;">Send svar</button>
+      </form>
+    </div>
+  `));
+});
+
+// Post svar
+app.post("/t/:teamCode/p/:postId", (req, res) => {
+  const code = normalizeCode(req.params.teamCode);
+  const team = teams[code];
+  const post = getPost(req.params.postId);
+  if (!team || !post) return res.status(404).send(layout("Ikke fundet", `<div class="card"><h1>Ikke fundet</h1></div>`));
+
+  const answerIndex = Number(req.body.answer_index);
+  const isCorrect = answerIndex === post.correctIndex;
+
+  if (!isCorrect) {
+    return res.send(layout("Forkert", `
+      <div class="card bad">
+        <h2>❌ Ikke korrekt</h2>
+        <p class="muted">Prøv igen eller gå videre.</p>
+        <div class="two">
+          <a class="btn" href="/t/${encodeURIComponent(code)}/p/${post.id}">Tilbage til posten</a>
+          <a class="btn" href="/t/${encodeURIComponent(code)}">Til oversigt</a>
+        </div>
+      </div>
+    `));
+  }
+
+  let awarded = 0;
+  if (!team.solved.has(post.id)) {
+    team.solved.add(post.id);
+    team.score += post.points;
+    awarded = post.points;
+  }
+
+  res.send(layout("Korrekt", `
+    <div class="card ok">
+      <h2>✅ Korrekt</h2>
+      <p>${escapeHtml(post.clue)}</p>
+      <p class="muted">Point: <code>+${awarded}</code> (total: <code>${team.score}</code>)</p>
+      <div class="two">
+        <a class="btn" href="/t/${encodeURIComponent(code)}">Til oversigt</a>
+        <a class="btn" href="/t/${encodeURIComponent(code)}/p/${post.id}">Til samme post</a>
+      </div>
+    </div>
+  `));
+});
+
+// Admin dashboard
+app.get("/admin", (req, res) => {
+  if (req.query.key !== ADMIN_KEY) {
+    return res.status(401).send(layout("Ingen adgang", `
+      <div class="card">
+        <h1>Ingen adgang</h1>
+        <p class="muted">Forkert nøgle.</p>
+      </div>
+    `));
+  }
+
+  const rows = Object.entries(teams)
+    .map(([code, t]) => ({ code, ...t, solvedCount: t.solved.size }))
+    .sort((a, b) => b.score - a.score || b.solvedCount - a.solvedCount);
+
+  const leaderboard = rows.map((t, i) => `
+    <li><strong>#${i + 1}</strong> ${escapeHtml(t.name)} (<code>${escapeHtml(t.code)}</code>) —
+      <code>${t.score}</code> point (<code>${t.solvedCount}</code> poster)
+    </li>
+  `).join("");
+
+  res.send(layout("GM-dashboard", `
+    <div class="card">
+      <h1>GM-dashboard</h1>
+      <p class="muted">Leaderboard (live).</p>
+      <ul>${leaderboard}</ul>
+    </div>
+
+    <div class="card">
+      <h2>Reset (før ny event)</h2>
+      <p class="muted">Nulstiller alle hold (point + løste poster).</p>
+      <form method="POST" action="/admin/reset">
+        <input type="hidden" name="key" value="${escapeHtml(ADMIN_KEY)}" />
+        <button type="submit">Reset alle hold</button>
+      </form>
+    </div>
+  `));
+});
+
+// Admin reset
+app.post("/admin/reset", (req, res) => {
+  const key = req.body.key || req.query.key;
+  if (key !== ADMIN_KEY) return res.status(401).send("Unauthorized");
+  resetAllTeams();
+  res.redirect(`/admin?key=${encodeURIComponent(ADMIN_KEY)}`);
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Running on port", PORT));
