@@ -30,7 +30,6 @@ const TEAM_CODES = [
 /**
  * In-memory state (POC)
  * OBS: Hvis Railway genstarter, nulstilles dette automatisk.
- * GM-reset virker uanset.
  */
 const teams = {};
 for (const t of TEAM_CODES) {
@@ -38,8 +37,8 @@ for (const t of TEAM_CODES) {
 }
 
 /**
- * Poster (POC)
- * Du kan bare tilføje flere i samme format.
+ * Poster (fritekst-svar)
+ * answers = liste af acceptable svar (synonymer/stavevarianter)
  */
 const POSTS = [
   {
@@ -49,7 +48,7 @@ const POSTS = [
     answers: ["TIMEGLAS", "TIME GLAS"],
     clue: "Ledetråd: I kan udelukke PERSON C.",
     points: 10,
-    hint: "Tip: Det er et symbol på tid." // valgfri
+    hint: "Tip: Symbolet handler om tid.",
   },
   {
     id: 2,
@@ -57,7 +56,7 @@ const POSTS = [
     question: "Hvilken retning peger pilene samlet set?",
     answers: ["NORD"],
     clue: "Ledetråd: GENSTAND B var ikke involveret.",
-    points: 10
+    points: 10,
   },
   {
     id: 3,
@@ -65,10 +64,10 @@ const POSTS = [
     question: "Hvilken farve-sekvens var korrekt?",
     answers: ["GRØN-RØD-BLÅ", "GRØN RØD BLÅ", "GRØN,RØD,BLÅ"],
     clue: "Ledetråd: Hændelsen skete IKKE ved STED D.",
-    points: 10
+    points: 10,
+    hint: "Skriv fx: GRØN-RØD-BLÅ",
   },
 ];
-
 
 function layout(title, body) {
   return `<!doctype html>
@@ -85,7 +84,7 @@ function layout(title, body) {
     a { color: #8cc4ff; text-decoration: none; }
     .btn { display: inline-block; border: 1px solid #2c3f4d; background: #18222b; color: #e9eef2; padding: 10px 12px; border-radius: 12px; }
     .btn:hover { background: #1c2a35; }
-    input, select, button { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #2c3f4d; background: #0f151a; color: #e9eef2; font-size: 1rem; }
+    input, button { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #2c3f4d; background: #0f151a; color: #e9eef2; font-size: 1rem; }
     button { background: #1a2a35; cursor: pointer; }
     button:hover { background: #203443; }
     .muted { color: #aab7c4; }
@@ -117,15 +116,22 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
-function getPost(id) {
-  return POSTS.find(p => p.id === Number(id));
-}
-
 function normalizeCode(code) {
   return String(code || "")
     .trim()
     .toUpperCase()
-    .replace(/\s+/g, ""); // fjern mellemrum
+    .replace(/\s+/g, "");
+}
+
+function normalizeAnswer(text) {
+  return String(text || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, " ");
+}
+
+function getPost(id) {
+  return POSTS.find(p => p.id === Number(id));
 }
 
 function resetAllTeams() {
@@ -139,12 +145,8 @@ function resetAllTeams() {
  * ROUTES
  */
 
-// Forside -> login
-app.get("/", (req, res) => {
-  res.redirect("/login");
-});
+app.get("/", (req, res) => res.redirect("/login"));
 
-// Login page
 app.get("/login", (req, res) => {
   res.send(layout("Log ind", `
     <div class="card">
@@ -155,14 +157,11 @@ app.get("/login", (req, res) => {
         <input name="team_code" placeholder="HOLD1" autocomplete="off" required />
         <button type="submit" style="margin-top:10px;">Start</button>
       </form>
-      <p class="muted small" style="margin-top:12px;">
-        GM-dashboard: <code>/admin?key=...</code>
-      </p>
+      <p class="muted small" style="margin-top:12px;">GM-dashboard: <code>/admin?key=...</code></p>
     </div>
   `));
 });
 
-// Login handler
 app.post("/login", (req, res) => {
   const code = normalizeCode(req.body.team_code);
   if (!teams[code]) {
@@ -177,7 +176,6 @@ app.post("/login", (req, res) => {
   res.redirect(`/t/${encodeURIComponent(code)}`);
 });
 
-// Team oversigt
 app.get("/t/:teamCode", (req, res) => {
   const code = normalizeCode(req.params.teamCode);
   const team = teams[code];
@@ -207,14 +205,12 @@ app.get("/t/:teamCode", (req, res) => {
   `));
 });
 
-// Post side
 app.get("/t/:teamCode/p/:postId", (req, res) => {
   const code = normalizeCode(req.params.teamCode);
   const team = teams[code];
   const post = getPost(req.params.postId);
   if (!team || !post) return res.status(404).send(layout("Ikke fundet", `<div class="card"><h1>Ikke fundet</h1></div>`));
 
-  const options = post.options.map((o, i) => `<option value="${i}">${escapeHtml(o)}</option>`).join("");
   const alreadySolved = team.solved.has(post.id);
 
   res.send(layout(post.title, `
@@ -227,31 +223,34 @@ app.get("/t/:teamCode/p/:postId", (req, res) => {
     <div class="card">
       <h1>${escapeHtml(post.title)}</h1>
       <p>${escapeHtml(post.question)}</p>
-      <p class="muted">${alreadySolved ? "I har allerede løst denne post (ingen ekstra point)." : "Svar for at få feedback og ledetråd."}</p>
+      <p class="muted">${alreadySolved ? "I har allerede løst denne post (ingen ekstra point)." : "Skriv svar for at få feedback og ledetråd."}</p>
 
       <form method="POST" action="/t/${encodeURIComponent(code)}/p/${post.id}">
-        <label class="muted">Vælg svar</label>
-        <select name="answer_index" required>${options}</select>
+        <label class="muted">Skriv jeres svar</label>
+        <input name="answer_text" placeholder="Skriv svar her" autocomplete="off" required />
         <button type="submit" style="margin-top:10px;">Send svar</button>
       </form>
+
+      ${post.hint ? `<p class="muted small" style="margin-top:10px;">${escapeHtml(post.hint)}</p>` : ""}
     </div>
   `));
 });
 
-// Post svar
 app.post("/t/:teamCode/p/:postId", (req, res) => {
   const code = normalizeCode(req.params.teamCode);
   const team = teams[code];
   const post = getPost(req.params.postId);
   if (!team || !post) return res.status(404).send(layout("Ikke fundet", `<div class="card"><h1>Ikke fundet</h1></div>`));
 
-  const answerIndex = Number(req.body.answer_index);
-  const isCorrect = answerIndex === post.correctIndex;
+  const submitted = normalizeAnswer(req.body.answer_text);
+  const accepted = (post.answers || []).map(normalizeAnswer);
+  const isCorrect = accepted.includes(submitted);
 
   if (!isCorrect) {
     return res.send(layout("Forkert", `
       <div class="card bad">
         <h2>❌ Ikke korrekt</h2>
+        <p class="muted">I skrev: <code>${escapeHtml(submitted)}</code></p>
         <p class="muted">Prøv igen eller gå videre.</p>
         <div class="two">
           <a class="btn" href="/t/${encodeURIComponent(code)}/p/${post.id}">Tilbage til posten</a>
@@ -281,7 +280,6 @@ app.post("/t/:teamCode/p/:postId", (req, res) => {
   `));
 });
 
-// Admin dashboard
 app.get("/admin", (req, res) => {
   if (req.query.key !== ADMIN_KEY) {
     return res.status(401).send(layout("Ingen adgang", `
@@ -320,7 +318,6 @@ app.get("/admin", (req, res) => {
   `));
 });
 
-// Admin reset
 app.post("/admin/reset", (req, res) => {
   const key = req.body.key || req.query.key;
   if (key !== ADMIN_KEY) return res.status(401).send("Unauthorized");
