@@ -46,30 +46,29 @@ const POSTS = [
     id: 1,
     title: "Post 1 – Skovkanten",
     question: "Hvilket symbol fandt I?",
-    options: ["RAVN", "TIMEGLAS", "ANKER"],
-    correctIndex: 1,
+    answers: ["TIMEGLAS", "TIME GLAS"],
     clue: "Ledetråd: I kan udelukke PERSON C.",
     points: 10,
+    hint: "Tip: Det er et symbol på tid." // valgfri
   },
   {
     id: 2,
     title: "Post 2 – Lysningen",
     question: "Hvilken retning peger pilene samlet set?",
-    options: ["Nord", "Syd", "Øst", "Vest"],
-    correctIndex: 0,
+    answers: ["NORD"],
     clue: "Ledetråd: GENSTAND B var ikke involveret.",
-    points: 10,
+    points: 10
   },
   {
     id: 3,
     title: "Post 3 – Stenringen",
     question: "Hvilken farve-sekvens var korrekt?",
-    options: ["Rød-Blå-Grøn", "Grøn-Rød-Blå", "Blå-Grøn-Rød", "Rød-Grøn-Blå"],
-    correctIndex: 1,
+    answers: ["GRØN-RØD-BLÅ", "GRØN RØD BLÅ", "GRØN,RØD,BLÅ"],
     clue: "Ledetråd: Hændelsen skete IKKE ved STED D.",
-    points: 10,
+    points: 10
   },
 ];
+
 
 function layout(title, body) {
   return `<!doctype html>
