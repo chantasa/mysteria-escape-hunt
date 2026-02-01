@@ -156,7 +156,7 @@ function escapeHtml(s) {
 }
 
 function getPost(id) {
-  return POSTS.find(p => p.id === Number(id));
+  return POSTS.find((p) => p.id === Number(id));
 }
 
 function resetAllTeamsAndGame() {
@@ -231,7 +231,10 @@ function layout(title, body) {
 app.get("/", (req, res) => res.redirect("/login"));
 
 app.get("/login", (req, res) => {
-  res.send(layout("Log ind", `
+  res.send(
+    layout(
+      "Log ind",
+      `
     <div class="card">
       <h1>Mysteria – Spil-login</h1>
       <p class="muted">Indtast jeres holdkode (fx <code>HOLD3</code>).</p>
@@ -242,19 +245,26 @@ app.get("/login", (req, res) => {
       </form>
       <p class="muted small" style="margin-top:12px;">GM-dashboard: <code>/admin?key=...</code></p>
     </div>
-  `));
+  `
+    )
+  );
 });
 
 app.post("/login", (req, res) => {
   const code = normalizeCode(req.body.team_code);
   if (!teams[code]) {
-    return res.status(400).send(layout("Forkert holdkode", `
+    return res.status(400).send(
+      layout(
+        "Forkert holdkode",
+        `
       <div class="card bad">
         <h2>❌ Holdkoden findes ikke</h2>
         <p class="muted">Tjek at I har skrevet den rigtigt (fx <code>HOLD1</code>).</p>
         <a class="btn" href="/login">Prøv igen</a>
       </div>
-    `));
+    `
+      )
+    );
   }
   res.redirect(`/t/${encodeURIComponent(code)}`);
 });
@@ -264,23 +274,28 @@ function gameBannerHtml() {
     return `<div class="card warn"><h2>⏳ Spillet er ikke startet endnu</h2><p class="muted">Vent på at GM starter spillet.</p></div>`;
   }
   if (isRunning()) {
-    return `<div class="card"><div class="row"><h2 style="margin:0;">⏱️ Tid tilbage</h2><code>${msToClock(timeLeftMs())}</code></div><p class="muted">I kan løse poster indtil tiden udløber.</p></div>`;
+    return `<div class="card"><div class="row"><h2 style="margin:0;">⏱️ Tid tilbage</h2><code>${msToClock(
+      timeLeftMs()
+    )}</code></div><p class="muted">I kan løse poster indtil tiden udløber.</p></div>`;
   }
-  return `<div class="card warn"><h2>⛔ Spillet er slut</h2><p class="muted">Poster er låst. Gå til slutvalget hos GM.</p></div>`;
+  return `<div class="card warn"><h2>⛔ Spillet er slut</h2><p class="muted">Poster er låst. Afgiv jeres endelige svar hos GM.</p></div>`;
 }
 
 app.get("/t/:teamCode", (req, res) => {
   const code = normalizeCode(req.params.teamCode);
   const team = teams[code];
-  if (!team) return res.status(404).send(layout("Ukendt hold", `<div class="card"><h1>Ukendt hold</h1></div>`));
+  if (!team)
+    return res
+      .status(404)
+      .send(layout("Ukendt hold", `<div class="card"><h1>Ukendt hold</h1></div>`));
 
   const banner = gameBannerHtml();
 
-  const list = POSTS.map(p => {
+  const list = POSTS.map((p) => {
     const solved = team.solved.has(p.id);
     const attempts = team.attempts.get(p.id) || 0;
     const locked = !isRunning();
-    const statusText = solved ? "✅ Løst" : (locked ? "🔒 Låst" : "Ikke løst");
+    const statusText = solved ? "✅ Løst" : locked ? "🔒 Låst" : "Ikke løst";
 
     return `
       <div class="card">
@@ -292,18 +307,20 @@ app.get("/t/:teamCode", (req, res) => {
   }).join("");
 
   const finalStatus = team.finalSubmitted
-    ? `<p class="muted">Slutvalg: <code>afgivet</code> (${team.finalCorrect ? "✅ korrekt" : "❌ forkert"})</p>`
-    : `<p class="muted">Slutvalg: <code>ikke afgivet</code></p>`;
+    ? `<p class="muted">Endeligt svar: <code>afgivet</code> (${team.finalCorrect ? "✅ registreret" : "✅ registreret"})</p>`
+    : `<p class="muted">Endeligt svar: <code>ikke afgivet</code></p>`;
 
   const finalLink = isEnded()
-    ? `<a class="btn" href="/t/${encodeURIComponent(code)}/final">Gå til slutvalg</a>`
-    : `<span class="muted small">Slutvalg låses op, når spillet slutter.</span>`;
+    ? `<a class="btn" href="/t/${encodeURIComponent(code)}/final">Afgiv jeres endelige svar</a>`
+    : `<span class="muted small">Det endelige svar åbner, når tiden er gået.</span>`;
 
-  res.send(layout(team.name, `
+  res.send(
+    layout(
+      team.name,
+      `
     <div class="card">
       <h1>${escapeHtml(team.name)}</h1>
       <p class="muted">Holdkode: <code>${escapeHtml(code)}</code></p>
-      <p class="muted">Point: <code>${team.score}</code></p>
       ${finalStatus}
       <div class="row">
         <a class="btn" href="/login">Skift hold</a>
@@ -313,25 +330,33 @@ app.get("/t/:teamCode", (req, res) => {
 
     ${banner}
     ${list}
-  `));
+  `
+    )
+  );
 });
 
 app.get("/t/:teamCode/p/:postId", (req, res) => {
   const code = normalizeCode(req.params.teamCode);
   const team = teams[code];
   const post = getPost(req.params.postId);
-  if (!team || !post) return res.status(404).send(layout("Ikke fundet", `<div class="card"><h1>Ikke fundet</h1></div>`));
+  if (!team || !post)
+    return res
+      .status(404)
+      .send(layout("Ikke fundet", `<div class="card"><h1>Ikke fundet</h1></div>`));
 
   const solved = team.solved.has(post.id);
   const locked = !isRunning();
   const attempts = team.attempts.get(post.id) || 0;
 
   if (locked) {
-    return res.send(layout(post.title, `
+    return res.send(
+      layout(
+        post.title,
+        `
       <div class="card">
         <div class="row">
           <a class="btn" href="/t/${encodeURIComponent(code)}">← Tilbage</a>
-          ${isEnded() ? `<a class="btn" href="/t/${encodeURIComponent(code)}/final">Slutvalg</a>` : ""}
+          ${isEnded() ? `<a class="btn" href="/t/${encodeURIComponent(code)}/final">Afgiv jeres endelige svar</a>` : ""}
         </div>
       </div>
       ${gameBannerHtml()}
@@ -339,11 +364,16 @@ app.get("/t/:teamCode/p/:postId", (req, res) => {
         <h2>🔒 Posten er låst</h2>
         <p class="muted">I kan kun løse poster, mens spillet kører.</p>
       </div>
-    `));
+    `
+      )
+    );
   }
 
   if (solved) {
-    return res.send(layout(post.title, `
+    return res.send(
+      layout(
+        post.title,
+        `
       <div class="card">
         <div class="row">
           <a class="btn" href="/t/${encodeURIComponent(code)}">← Tilbage</a>
@@ -354,10 +384,15 @@ app.get("/t/:teamCode/p/:postId", (req, res) => {
         <p class="muted">Forsøg: <code>${attempts}</code></p>
         <p class="muted">I kan ikke svare igen på denne post.</p>
       </div>
-    `));
+    `
+      )
+    );
   }
 
-  res.send(layout(post.title, `
+  res.send(
+    layout(
+      post.title,
+      `
     <div class="card">
       <div class="row">
         <a class="btn" href="/t/${encodeURIComponent(code)}">← Tilbage</a>
@@ -369,8 +404,7 @@ app.get("/t/:teamCode/p/:postId", (req, res) => {
     <div class="card">
       <h1>${escapeHtml(post.title)}</h1>
       <p>${escapeHtml(post.question)}</p>
-      <p class="muted">Forkert svar: <code>-1 point</code></p>
-      <p class="muted">Forsøg indtil korrekt. Når I rammer korrekt, låses posten.</p>
+      <p class="muted">I får feedback med det samme. Når I rammer korrekt, låses posten.</p>
 
       <form method="POST" action="/t/${encodeURIComponent(code)}/p/${post.id}">
         <label class="muted">Skriv jeres svar</label>
@@ -381,34 +415,49 @@ app.get("/t/:teamCode/p/:postId", (req, res) => {
       ${post.hint ? `<p class="muted small" style="margin-top:10px;">${escapeHtml(post.hint)}</p>` : ""}
       <p class="muted small">Forsøg indtil nu: <code>${attempts}</code></p>
     </div>
-  `));
+  `
+    )
+  );
 });
 
 app.post("/t/:teamCode/p/:postId", (req, res) => {
   const code = normalizeCode(req.params.teamCode);
   const team = teams[code];
   const post = getPost(req.params.postId);
-  if (!team || !post) return res.status(404).send(layout("Ikke fundet", `<div class="card"><h1>Ikke fundet</h1></div>`));
+  if (!team || !post)
+    return res
+      .status(404)
+      .send(layout("Ikke fundet", `<div class="card"><h1>Ikke fundet</h1></div>`));
 
   if (!isRunning()) {
-    return res.send(layout("Låst", `
+    return res.send(
+      layout(
+        "Låst",
+        `
       ${gameBannerHtml()}
       <div class="card warn">
         <h2>🔒 Tiden er gået</h2>
         <p class="muted">I kan ikke indsende svar længere.</p>
         <a class="btn" href="/t/${encodeURIComponent(code)}">Tilbage</a>
       </div>
-    `));
+    `
+      )
+    );
   }
 
   if (team.solved.has(post.id)) {
-    return res.send(layout("Allerede løst", `
+    return res.send(
+      layout(
+        "Allerede løst",
+        `
       <div class="card ok">
         <h2>✅ Allerede løst</h2>
         <p class="muted">I kan ikke svare igen på denne post.</p>
         <a class="btn" href="/t/${encodeURIComponent(code)}">Tilbage</a>
       </div>
-    `));
+    `
+      )
+    );
   }
 
   // registrér forsøg
@@ -417,42 +466,50 @@ app.post("/t/:teamCode/p/:postId", (req, res) => {
 
   const submitted = normalizeAnswer(req.body.answer_text);
   const accepted = (post.answers || []).map(normalizeAnswer);
-  const isCorrect = accepted.includes(submitted);
+  const correct = accepted.includes(submitted);
 
-  if (!isCorrect) {
-    // -1 point pr forkert
+  if (!correct) {
+    // -1 point pr forkert (skjult for spillere)
     team.score -= 1;
 
-    return res.send(layout("Forkert", `
+    return res.send(
+      layout(
+        "Ikke korrekt",
+        `
       ${gameBannerHtml()}
       <div class="card bad">
         <h2>❌ Ikke korrekt</h2>
         <p class="muted">I skrev: <code>${escapeHtml(submitted)}</code></p>
-        <p class="muted">Point: <code>-1</code> (total: <code>${team.score}</code>)</p>
+        <p class="muted">Prøv igen eller gå videre.</p>
         <div class="two">
           <a class="btn" href="/t/${encodeURIComponent(code)}/p/${post.id}">Prøv igen</a>
           <a class="btn" href="/t/${encodeURIComponent(code)}">Til oversigt</a>
         </div>
       </div>
-    `));
+    `
+      )
+    );
   }
 
-  // korrekt: giv point én gang og lås posten
+  // korrekt: giv point én gang og lås posten (skjult for spillere)
   team.solved.add(post.id);
   team.score += post.points;
 
-  return res.send(layout("Korrekt", `
+  return res.send(
+    layout(
+      "Korrekt",
+      `
     ${gameBannerHtml()}
     <div class="card ok">
       <h2>✅ Korrekt</h2>
       <p>${escapeHtml(post.clue)}</p>
-      <p class="muted">Point: <code>+${post.points}</code> (total: <code>${team.score}</code>)</p>
       <div class="two">
         <a class="btn" href="/t/${encodeURIComponent(code)}">Til oversigt</a>
-        <a class="btn" href="/t/${encodeURIComponent(code)}/p/${post.id}">Til samme post</a>
       </div>
     </div>
-  `));
+  `
+    )
+  );
 });
 
 /**
@@ -461,42 +518,56 @@ app.post("/t/:teamCode/p/:postId", (req, res) => {
 app.get("/t/:teamCode/final", (req, res) => {
   const code = normalizeCode(req.params.teamCode);
   const team = teams[code];
-  if (!team) return res.status(404).send(layout("Ukendt hold", `<div class="card"><h1>Ukendt hold</h1></div>`));
-isRunning(); // tving auto-slut når tiden er gået
+  if (!team)
+    return res
+      .status(404)
+      .send(layout("Ukendt hold", `<div class="card"><h1>Ukendt hold</h1></div>`));
+
+  // ⭐ tving auto-slut når tiden er gået
+  isRunning();
+
   if (!isEnded()) {
-    return res.send(layout("Slutvalg låst", `
+    return res.send(
+      layout(
+        "Slutvalg låst",
+        `
       <div class="card warn">
-        <h2>⛔ Slutvalg er ikke åbent endnu</h2>
+        <h2>⛔ Det endelige svar er ikke åbent endnu</h2>
         <p class="muted">Gå tilbage til GM, når tiden er gået.</p>
         <a class="btn" href="/t/${encodeURIComponent(code)}">Tilbage</a>
       </div>
-    `));
+    `
+      )
+    );
   }
 
   if (team.finalSubmitted) {
-    return res.send(layout("Slutvalg afgivet", `
+    return res.send(
+      layout(
+        "Endeligt svar afgivet",
+        `
       <div class="card ok">
-        <h2>✅ Slutvalg er allerede afgivet</h2>
-        <p class="muted">Valg: <code>${escapeHtml(team.finalChoiceId || "")}</code></p>
-        <p class="muted">Resultat: ${team.finalCorrect ? "✅ korrekt" : "❌ forkert"}</p>
-        <p class="muted">Point: ${team.finalCorrect ? `<code>+${FINAL.pointsCorrect}</code>` : "<code>+0</code>"}</p>
-        <a class="btn" href="/t/${encodeURIComponent(code)}">Tilbage</a>
+        <h2>✅ Jeres endelige svar er registreret</h2>
+        <p class="muted">I kan ikke ændre det.</p>
+        <a class="btn" href="/t/${encodeURIComponent(code)}">Tilbage til oversigt</a>
       </div>
-    `));
+    `
+      )
+    );
   }
 
-  const tiles = FINAL.options.map(opt => {
-    const hasImg = !!opt.imageUrl;
-    const imgHtml = hasImg
-      ? `<img src="${escapeHtml(opt.imageUrl)}" alt="${escapeHtml(opt.label)}" />`
-      : `<div class="img">BILLEDE</div>`;
+  const tiles = FINAL.options
+    .map((opt) => {
+      const hasImg = !!opt.imageUrl;
+      const imgHtml = hasImg
+        ? `<img src="${escapeHtml(opt.imageUrl)}" alt="${escapeHtml(opt.label)}" />`
+        : `<div class="img">BILLEDE</div>`;
 
-    return `
+      return `
       <div class="tile">
         ${imgHtml}
         <div class="label">
           <div><strong>${escapeHtml(opt.label)}</strong></div>
-          <div class="muted small"><code>${escapeHtml(opt.id)}</code></div>
         </div>
         <form method="POST" action="/t/${encodeURIComponent(code)}/final">
           <input type="hidden" name="choice_id" value="${escapeHtml(opt.id)}" />
@@ -504,9 +575,13 @@ isRunning(); // tving auto-slut når tiden er gået
         </form>
       </div>
     `;
-  }).join("");
+    })
+    .join("");
 
-  res.send(layout("Slutvalg", `
+  res.send(
+    layout(
+      "Afgiv endeligt svar",
+      `
     <div class="card">
       <div class="row">
         <a class="btn" href="/t/${encodeURIComponent(code)}">← Tilbage</a>
@@ -516,27 +591,40 @@ isRunning(); // tving auto-slut når tiden er gået
     <div class="card">
       <h1>${escapeHtml(FINAL.title)}</h1>
       <p>${escapeHtml(FINAL.question)}</p>
-      <p class="muted">I har <code>kun 1 forsøg</code>. Korrekt: <code>+${FINAL.pointsCorrect}</code> point.</p>
+      <p class="muted">I har <code>kun 1 forsøg</code>. Vælg med omhu.</p>
     </div>
 
     <div class="grid">
       ${tiles}
     </div>
-  `));
+  `
+    )
+  );
 });
 
 app.post("/t/:teamCode/final", (req, res) => {
   const code = normalizeCode(req.params.teamCode);
   const team = teams[code];
-  if (!team) return res.status(404).send(layout("Ukendt hold", `<div class="card"><h1>Ukendt hold</h1></div>`));
+  if (!team)
+    return res
+      .status(404)
+      .send(layout("Ukendt hold", `<div class="card"><h1>Ukendt hold</h1></div>`));
+
+  // tving auto-slut når tiden er gået
+  isRunning();
 
   if (!isEnded()) {
-    return res.status(400).send(layout("Ikke åbent", `
+    return res.status(400).send(
+      layout(
+        "Ikke åbent",
+        `
       <div class="card warn">
-        <h2>⛔ Slutvalg er ikke åbent endnu</h2>
+        <h2>⛔ Det endelige svar er ikke åbent endnu</h2>
         <a class="btn" href="/t/${encodeURIComponent(code)}">Tilbage</a>
       </div>
-    `));
+    `
+      )
+    );
   }
 
   if (team.finalSubmitted) {
@@ -548,18 +636,23 @@ app.post("/t/:teamCode/final", (req, res) => {
   team.finalChoiceId = choice;
   team.finalCorrect = choice === FINAL.correctId;
 
+  // point gives/skjules (kun GM ser det)
   if (team.finalCorrect) {
     team.score += FINAL.pointsCorrect;
   }
 
-  return res.send(layout("Slutvalg resultat", `
-    <div class="card ${team.finalCorrect ? "ok" : "bad"}">
-      <h2>${team.finalCorrect ? "✅ Korrekt slutvalg!" : "❌ Forkert slutvalg"}</h2>
-      <p class="muted">Valg: <code>${escapeHtml(choice)}</code></p>
-      <p class="muted">Point: ${team.finalCorrect ? `<code>+${FINAL.pointsCorrect}</code>` : "<code>+0</code>"} (total: <code>${team.score}</code>)</p>
+  return res.send(
+    layout(
+      "Registreret",
+      `
+    <div class="card ok">
+      <h2>✅ Jeres endelige svar er registreret</h2>
+      <p class="muted">Tak. I kan ikke ændre det.</p>
       <a class="btn" href="/t/${encodeURIComponent(code)}">Tilbage til oversigt</a>
     </div>
-  `));
+  `
+    )
+  );
 });
 
 /**
@@ -567,12 +660,17 @@ app.post("/t/:teamCode/final", (req, res) => {
  */
 function requireAdmin(req, res) {
   if (req.query.key !== ADMIN_KEY) {
-    res.status(401).send(layout("Ingen adgang", `
+    res.status(401).send(
+      layout(
+        "Ingen adgang",
+        `
       <div class="card">
         <h1>Ingen adgang</h1>
         <p class="muted">Forkert nøgle.</p>
       </div>
-    `));
+    `
+      )
+    );
     return false;
   }
   return true;
@@ -595,35 +693,43 @@ app.get("/admin", (req, res) => {
     }))
     .sort((a, b) => b.score - a.score || b.solvedCount - a.solvedCount);
 
-  const leaderboard = rows.map((t, i) => `
+  const leaderboard = rows
+    .map(
+      (t, i) => `
     <li>
       <strong>#${i + 1}</strong> ${escapeHtml(t.name)} (<code>${escapeHtml(t.code)}</code>) —
       <code>${t.score}</code> point • poster: <code>${t.solvedCount}</code> • slutvalg:
       ${t.finalSubmitted ? (t.finalCorrect ? "✅" : "❌") : "—"}
     </li>
-  `).join("");
+  `
+    )
+    .join("");
 
   let statusText = "";
   if (gameState.status === "idle") statusText = "⏳ Ikke startet";
-  if (isRunning()) statusText = `⏱️ Kører • tid tilbage: ${msToClock(timeLeftMs())}`;
-  if (isEnded()) statusText = "⛔ Slut • slutvalg åbent";
+  if (isRunning())
+    statusText = `⏱️ Kører • tid tilbage: ${msToClock(timeLeftMs())}`;
+  if (isEnded()) statusText = "⛔ Tiden er gået • Slutvalg er åbent";
 
-  res.send(layout("GM-dashboard", `
+  res.send(
+    layout(
+      "GM-dashboard",
+      `
     <div class="card">
       <h1>GM-dashboard</h1>
       <p class="muted">Status: <code>${escapeHtml(statusText)}</code></p>
 
       <div class="two">
         <form method="POST" action="/admin/start?key=${encodeURIComponent(ADMIN_KEY)}">
-          <button type="submit" ${gameState.status === "idle" ? "" : "disabled"}>Start spil (75 min)</button>
+          <button type="submit" ${gameState.status === "idle" ? "" : "disabled"}>Start spil (${GAME_MINUTES} min)</button>
         </form>
 
         <form method="POST" action="/admin/end?key=${encodeURIComponent(ADMIN_KEY)}">
-          <button type="submit" ${isEnded() ? "disabled" : ""}>Afslut spil (åbn slutvalg)</button>
+          <button type="submit" ${isEnded() ? "disabled" : ""}>Nødstops-knap (åbn slutvalg nu)</button>
         </form>
       </div>
       <p class="muted small" style="margin-top:10px;">
-        Tip: Hvis holdene først skal lave slutvalg nede ved GM, så siger du “kom ned til mig” når tiden er gået/du afslutter.
+        Slutvalg åbner automatisk, når tiden er gået. Nødstops-knappen er kun backup.
       </p>
     </div>
 
@@ -639,7 +745,9 @@ app.get("/admin", (req, res) => {
         <button type="submit">Reset alt</button>
       </form>
     </div>
-  `));
+  `
+    )
+  );
 });
 
 app.post("/admin/start", (req, res) => {
@@ -658,7 +766,6 @@ app.post("/admin/end", (req, res) => {
 
   // end uanset om den kører/idle
   gameState.status = "ended";
-  // behold tider hvis de findes, men det er ikke vigtigt
   res.redirect(`/admin?key=${encodeURIComponent(ADMIN_KEY)}`);
 });
 
