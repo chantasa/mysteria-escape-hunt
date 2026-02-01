@@ -462,7 +462,7 @@ app.get("/t/:teamCode/final", (req, res) => {
   const code = normalizeCode(req.params.teamCode);
   const team = teams[code];
   if (!team) return res.status(404).send(layout("Ukendt hold", `<div class="card"><h1>Ukendt hold</h1></div>`));
-
+isRunning(); // tving auto-slut når tiden er gået
   if (!isEnded()) {
     return res.send(layout("Slutvalg låst", `
       <div class="card warn">
