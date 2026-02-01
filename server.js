@@ -243,7 +243,7 @@ app.get("/login", (req, res) => {
         <input name="team_code" placeholder="HOLD1" autocomplete="off" required />
         <button type="submit" style="margin-top:10px;">Start</button>
       </form>
-      <p class="muted small" style="margin-top:12px;">GM-dashboard: <code>/admin?key=...</code></p>
+      
     </div>
   `
     )
