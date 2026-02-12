@@ -242,5 +242,5 @@ app.post("/admin/start", (req, res) => {
   gameState.endTime = now() + GAME_MINUTES * 60 * 1000;
   res.redirect(`/admin?key=${ADMIN_KEY}`);
 });
-
-app.listen(3000, () => console.log("Mysteria running"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Mysteria running on", PORT));
