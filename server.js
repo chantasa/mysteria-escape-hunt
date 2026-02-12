@@ -135,47 +135,59 @@ function layout(title, body, autoRefresh = false) {
         margin-top:10px;
       }
 
-     .grid {
-  display:grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap:18px;
+  /* Links uden underline */
+a {
+  text-decoration: none;
+  color: inherit;
 }
 
-@media (max-width:900px){
+/* GRID – mobil først */
+.grid {
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:16px;
+}
+
+/* Tablet */
+@media (min-width:700px){
   .grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-@media (max-width:600px){
-  .grid { grid-template-columns: repeat(2, 1fr); }
+/* Desktop */
+@media (min-width:1100px){
+  .grid { grid-template-columns: repeat(5, 1fr); }
 }
 
 .post-box {
   background: linear-gradient(145deg, #162820, #0f1b17);
   border: 1px solid #3f6b58;
-  border-radius: 16px;
-  height: 120px;
+  border-radius: 18px;
+  height: 140px;              /* lidt større til mobil */
   display:flex;
   align-items:center;
   justify-content:center;
   text-align:center;
-  padding:15px;
-  font-size:1rem;
+  padding:18px;
+  font-size:1.05rem;
   font-weight:600;
-  color:#f7f1d0;
-  letter-spacing:0.3px;
+  color:#fff6cc;
+  letter-spacing:0.4px;
   transition:0.25s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 .post-box:hover {
   background: linear-gradient(145deg, #1f3a30, #14241d);
-  transform: translateY(-4px);
+  transform: translateY(-3px);
   box-shadow:0 6px 18px rgba(0,0,0,0.6);
   border-color:#6ca889;
 }
 
 .post-box strong {
-  color:#fff6cc;
+  display:block;
+  line-height:1.3;
 }
+
 
       .leaderboard li {
         margin-bottom:8px;
