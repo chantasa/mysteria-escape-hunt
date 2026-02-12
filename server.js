@@ -142,18 +142,23 @@ a {
 }
 
 /* GRID – mobil først */
+a {
+  text-decoration: none;
+  color: inherit;
+  display:block;         /* vigtig */
+  height:100%;           /* vigtig */
+}
+
 .grid {
   display:grid;
   grid-template-columns: repeat(2, 1fr);
   gap:16px;
 }
 
-/* Tablet */
 @media (min-width:700px){
   .grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* Desktop */
 @media (min-width:1100px){
   .grid { grid-template-columns: repeat(5, 1fr); }
 }
@@ -162,30 +167,34 @@ a {
   background: linear-gradient(145deg, #162820, #0f1b17);
   border: 1px solid #3f6b58;
   border-radius: 18px;
-  height: 140px;              /* lidt større til mobil */
+  aspect-ratio: 1 / 1;          /* ← Ens størrelse */
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
+  padding:15px;
   text-align:center;
-  padding:18px;
-  font-size:1.05rem;
-  font-weight:600;
-  color:#fff6cc;
-  letter-spacing:0.4px;
   transition:0.25s ease;
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.post-number {
+  font-size:1.2rem;
+  font-weight:700;
+  color:#d4b26a;
+  margin-bottom:8px;
+}
+
+.post-title {
+  font-size:0.95rem;
+  color:#fff6cc;
+  line-height:1.3;
 }
 
 .post-box:hover {
   background: linear-gradient(145deg, #1f3a30, #14241d);
   transform: translateY(-3px);
-  box-shadow:0 6px 18px rgba(0,0,0,0.6);
   border-color:#6ca889;
-}
-
-.post-box strong {
-  display:block;
-  line-height:1.3;
 }
 
 
