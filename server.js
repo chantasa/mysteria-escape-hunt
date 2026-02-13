@@ -514,25 +514,30 @@ app.get("/post/:code/:postId", (req, res) => {
     };
   }
 
-  const state = team.postStates[post.id];
+const state = team.postStates[post.id];
 
-  res.send(layout(post.title, `
-    <div class="card">
-      <h2>${post.title}</h2>
-      <div>Jeres point: <strong>${team.score}</strong></div>
-    </div>
+let hintHtml = "";
 
-    <div class="card">
-      <p>Her kommer opgaveteksten senere</p>
-      <form method="POST" action="/post/${code}/${post.id}/answer">
-        <input name="answer" required placeholder="Indtast svar"/>
-        <button>Svar</button>
+post.hints.forEach((hintText, index) => {
+  const hintNumber = index + 1;
+  const cost = hintNumber === 1 ? 10 : 40;
+
+  if (state.hintsUsed.includes(hintNumber)) {
+    hintHtml += `
+      <div class="card">
+        <strong>Hint ${hintNumber}:</strong>
+        <p>${hintText}</p>
+      </div>
+    `;
+  } else if (!state.answeredCorrect) {
+    hintHtml += `
+      <form method="POST" action="/post/${code}/${post.id}/hint/${hintNumber}">
+        <button>Køb hint ${hintNumber} (-${cost} point)</button>
       </form>
-    </div>
-
-    <a href="/game/${code}"><button>Tilbage</button></a>
-  `));
+    `;
+  }
 });
+
 
 app.post("/post/:code/:postId/answer", (req, res) => {
   const { code, postId } = req.params;
