@@ -447,12 +447,13 @@ app.get("/game/:code", (req, res) => {
   const team = teams[req.params.code];
 
   const posts = POSTS.map(p => `
-    <a href="#">
-      <div class="post-box">
-        <strong>${p.id}. ${p.title}</strong>
-      </div>
-    </a>
-  `).join("");
+  <a href="/post/${req.params.code}/${p.id}">
+    <div class="post-box">
+      <div class="post-number">${p.id}</div>
+      <div class="post-title">${p.title}</div>
+    </div>
+  </a>
+`).join("");
 
   res.send(layout("Spil", `
     <div class="card">
