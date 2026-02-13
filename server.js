@@ -128,60 +128,31 @@ input{
 }
 
 .post-box{
-  height:110px;
+  height:120px;
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  border-radius:16px;
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.15);
+  border-radius:18px;
+  background:linear-gradient(145deg,#1a1f3a,#12172b);
+  border:1px solid #2e3b6b;
   text-align:center;
   font-weight:600;
-  color:white;
-  transition:0.25s;
+  color:#f5f7ff;
+  transition:0.25s ease;
+  text-decoration:none;
 }
 
 .post-box:hover{
-  background:rgba(255,255,255,0.15);
-  transform:translateY(-3px);
-}
-
-.post-number{
-  font-size:18px;
-  font-weight:700;
-  opacity:0.7;
-  margin-bottom:6px;
-}
-
-.post-title{
-  font-size:15px;
+  transform:translateY(-4px);
+  box-shadow:0 8px 20px rgba(0,0,0,0.6);
+  border-color:#5b7cff;
+  background:linear-gradient(145deg,#222867,#171d40);
 }
 
 .solved{
-  background:rgba(50,200,120,0.3);
-}
-
-.muted{
-  opacity:0.7;
-  font-size:14px;
-}
-
-@media (min-width:700px){
-  body{
-    align-items:center;
-  }
-}
-</style>
-</head>
-
-<body>
-<div class="wrap">
-${body}
-</div>
-</body>
-</html>
-`
+  background:linear-gradient(145deg,#1f4d37,#17352a);
+  border-color:#2ecc71;
 }
 
 
