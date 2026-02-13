@@ -230,6 +230,22 @@ function formatTime(ms) {
   const s = total % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
 }
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function createShuffledDeck() {
+  return shuffle([
+    "double","double","double","double","double",
+    "minus","minus","minus",
+    "steal","steal"
+  ]);
+}
+
 
 /* ============================
    LAYOUT
