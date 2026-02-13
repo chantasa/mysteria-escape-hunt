@@ -411,10 +411,11 @@ app.get("/teamname/:code", (req, res) => {
 app.post("/teamname/:code", (req, res) => {
   teams[req.params.code] = {
     name: req.body.name,
-    score: 50
+    score: 50,
+    solvedPosts: [],
+    postStates: {},
+    chanceDeck: []
   };
-  res.redirect(`/intro/${req.params.code}`);
-});
 
 app.get("/intro/:code", (req, res) => {
   const team = teams[req.params.code];
@@ -477,7 +478,7 @@ app.get("/post/:code/:postId", (req, res) => {
 
   if (!team || !post) return res.send("Fejl");
 
-  if (team.solvedPosts.includes(post.id)) {
+  if (team.solvedPosts && team.solvedPosts.includes(post.id)) {
     return res.send(layout("Løst", `
       <div class="card">
         <h2>Denne opgave er allerede løst.</h2>
