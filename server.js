@@ -6,14 +6,14 @@ app.use(express.urlencoded({ extended: true }));
 const ADMIN_KEY = process.env.ADMIN_KEY || "dev-admin-key";
 const GAME_MINUTES = 75;
 
-/* ============================
+/* =============================
    TEAM CODES
-============================ */
+============================= */
 const TEAM_CODES = Array.from({ length: 10 }, (_, i) => `HOLD${i + 1}`);
 
-/* ============================
+/* =============================
    POSTS
-============================ */
+============================= */
 const POSTS = [
   "Dragernes Dal",
   "Den Dunkle Sti",
@@ -37,13 +37,12 @@ const POSTS = [
   "Den Sidste Ring"
 ].map((title, i) => ({
   id: i + 1,
-  title,
-  correctAnswer: `SVAR${i + 1}`
+  title
 }));
 
-/* ============================
+/* =============================
    STATE
-============================ */
+============================= */
 const teams = {};
 const gameState = {
   status: "idle",
@@ -74,9 +73,9 @@ function formatTime(ms) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-/* ============================
+/* =============================
    LAYOUT
-============================ */
+============================= */
 function layout(title, body, autoRefresh = false) {
   return `
   <html>
@@ -92,12 +91,12 @@ function layout(title, body, autoRefresh = false) {
         justify-content:center;
         background: radial-gradient(circle at top, #0f1b17, #060a08);
         color: #f2e8c8;
-        font-family: "Georgia", serif;
+        font-family: Georgia, serif;
       }
 
       .container {
         width:100%;
-        max-width:1100px;
+        max-width:900px;
         padding:20px;
       }
 
@@ -110,16 +109,7 @@ function layout(title, body, autoRefresh = false) {
         box-shadow:0 0 20px rgba(0,0,0,0.4);
       }
 
-      h1, h2 { color:#d4b26a; }
-
-      button {
-        background:#1f332a;
-        border:1px solid #3f6b58;
-        color:#f2e8c8;
-        padding:10px 16px;
-        border-radius:10px;
-        cursor:pointer;
-      }
+      h1, h2 { color:#d4b26a; margin-top:0; }
 
       input {
         padding:10px;
@@ -128,78 +118,77 @@ function layout(title, body, autoRefresh = false) {
         background:#08110e;
         color:white;
         width:100%;
+        margin-bottom:10px;
+      }
+
+      button {
+        background:#1f332a;
+        border:1px solid #3f6b58;
+        color:#f2e8c8;
+        padding:10px 16px;
+        border-radius:10px;
+        cursor:pointer;
+        width:100%;
       }
 
       .score {
-        font-size:1.2rem;
+        font-size:1.1rem;
         margin-top:10px;
       }
 
-  /* Links uden underline */
-a {
-  text-decoration: none;
-  color: inherit;
-}
+      a {
+        text-decoration:none;
+        color:inherit;
+      }
 
-/* GRID – mobil først */
-a {
-  text-decoration: none;
-  color: inherit;
-  display:block;         /* vigtig */
-  height:100%;           /* vigtig */
-}
+      .grid {
+        display:grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap:12px;
+        margin-top:20px;
+      }
 
-.grid {
-  display:grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap:16px;
-}
+      @media (min-width:800px){
+        .grid { grid-template-columns: repeat(4, 1fr); }
+      }
 
-@media (min-width:700px){
-  .grid { grid-template-columns: repeat(3, 1fr); }
-}
+      .post-box {
+        border-radius:16px;
+        background: linear-gradient(145deg, #162820, #0f1b17);
+        border:1px solid #2f4b3f;
+        aspect-ratio:1/1;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        transition:0.2s ease;
+      }
 
-@media (min-width:1100px){
-  .grid { grid-template-columns: repeat(5, 1fr); }
-}
+      .post-box:hover {
+        transform:translateY(-3px);
+        box-shadow:0 6px 18px rgba(0,0,0,0.6);
+      }
 
-.post-box {
-  background: linear-gradient(145deg, #162820, #0f1b17);
-  border: 1px solid #3f6b58;
-  border-radius: 18px;
-  aspect-ratio: 1 / 1;          /* ← Ens størrelse */
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:15px;
-  text-align:center;
-  transition:0.25s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
+      .post-inner {
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        gap:6px;
+        text-align:center;
+      }
 
-.post-number {
-  font-size:1.2rem;
-  font-weight:700;
-  color:#d4b26a;
-  margin-bottom:8px;
-}
+      .post-number {
+        font-size:1.2rem;
+        font-weight:700;
+        color:#d4b26a;
+      }
 
-.post-title {
-  font-size:0.95rem;
-  color:#fff6cc;
-  line-height:1.3;
-}
-
-.post-box:hover {
-  background: linear-gradient(145deg, #1f3a30, #14241d);
-  transform: translateY(-3px);
-  border-color:#6ca889;
-}
-
+      .post-name {
+        font-size:0.9rem;
+        color:#fff6cc;
+      }
 
       .leaderboard li {
-        margin-bottom:8px;
+        margin-bottom:6px;
       }
 
     </style>
@@ -213,9 +202,9 @@ a {
   `;
 }
 
-/* ============================
+/* =============================
    LOGIN FLOW
-============================ */
+============================= */
 
 app.get("/", (req, res) => res.redirect("/login"));
 
@@ -276,9 +265,9 @@ app.post("/intro/:code", (req, res) => {
   res.redirect(`/game/${req.params.code}`);
 });
 
-/* ============================
+/* =============================
    GAME
-============================ */
+============================= */
 
 app.get("/game/:code", (req, res) => {
   if (!isRunning()) {
@@ -289,10 +278,13 @@ app.get("/game/:code", (req, res) => {
 
   const team = teams[req.params.code];
 
-  const posts = POSTS.map(p => `
+  const posts = POSTS.map((p) => `
     <a href="#">
       <div class="post-box">
-        <strong>${p.id}. ${p.title}</strong>
+        <div class="post-inner">
+          <div class="post-number">${p.id}</div>
+          <div class="post-name">${p.title}</div>
+        </div>
       </div>
     </a>
   `).join("");
@@ -304,18 +296,15 @@ app.get("/game/:code", (req, res) => {
       <div>⏱ Tid tilbage: ${formatTime(timeLeft())}</div>
     </div>
 
-    <div class="card">
-      <h2>Lokationer</h2>
-      <div class="grid">
-        ${posts}
-      </div>
+    <div class="grid">
+      ${posts}
     </div>
   `));
 });
 
-/* ============================
+/* =============================
    GM DASHBOARD
-============================ */
+============================= */
 
 app.get("/admin", (req, res) => {
   if (req.query.key !== ADMIN_KEY) return res.send("Ingen adgang");
