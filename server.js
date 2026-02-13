@@ -360,14 +360,33 @@ function layout(title, body, autoRefresh = false) {
 }
 
 .chance-btn {
-  background: linear-gradient(145deg,#1c2a25,#0f1b17);
-  border:2px solid #5bd37c;
-  color:#5bd37c;
+  position: relative;
+  background: linear-gradient(145deg, #13261f, #0b1612);
+  border: 2px solid #6ee7a8;
+  color: #6ee7a8;
+  overflow: hidden;
+  transition: all 0.25s ease;
 }
 
+/* Blød indre glød */
+.chance-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(110,231,168,0.25), transparent 60%);
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}
+
+/* Hover – lidt liv */
 .chance-btn:hover {
-  transform:scale(1.02);
-  box-shadow:0 0 18px rgba(91,211,124,0.4);
+  box-shadow: 0 0 18px rgba(110,231,168,0.5);
+  transform: translateY(-2px);
+}
+
+/* Hover gør energien stærkere */
+.chance-btn:hover::before {
+  opacity: 0.8;
 }
 
 
