@@ -250,16 +250,26 @@ app.post("/hint/:code/:id/:nr",(req,res)=>{
   `));
 });
 
+// ======================================
+// SVAR PÅ POST
+// ======================================
+
 app.post("/post/:code/:id",(req,res)=>{
   let team = teams[req.params.code]
   let post = POSTS.find(p=>p.id==req.params.id)
-  let answer = req.body.answer?.toUpperCase().trim()
 
   if(!team || !post) return res.redirect("/")
 
+  // 🔒 Hvis posten allerede er løst
+  if(team.solved.has(post.id)){
+    return res.redirect(`/game/${req.params.code}`)
+  }
+
+  let answer = req.body.answer?.toUpperCase().trim()
+
   if(answer === post.answer){
 
-    // Kun markér som løst
+    // Markér post som løst
     team.solved.add(post.id)
 
     return res.send(layout("Korrekt", `
@@ -295,12 +305,18 @@ app.post("/post/:code/:id",(req,res)=>{
   }
 })
 
+
+// ======================================
+// SAFE REWARD
+// ======================================
+
 app.get("/reward/:code/:id/safe",(req,res)=>{
   let team = teams[req.params.code]
   if(!team) return res.redirect("/login")
 
   let rewardKey = req.params.id + "_rewarded"
 
+  // 🔒 Hvis reward allerede taget
   if(team.solved.has(rewardKey)){
     return res.redirect(`/game/${req.params.code}`)
   }
@@ -311,9 +327,21 @@ app.get("/reward/:code/:id/safe",(req,res)=>{
   res.redirect(`/game/${req.params.code}`)
 })
 
+
+// ======================================
+// CHANCE REWARD
+// ======================================
+
 app.get("/reward/:code/:id/chance",(req,res)=>{
   let team = teams[req.params.code]
   if(!team) return res.redirect("/login")
+
+  let rewardKey = req.params.id + "_rewarded"
+
+  // 🔒 Hvis reward allerede taget
+  if(team.solved.has(rewardKey)){
+    return res.redirect(`/game/${req.params.code}`)
+  }
 
   const options = [
     { type:"double", weight:40 },
@@ -346,13 +374,20 @@ app.get("/reward/:code/:id/chance",(req,res)=>{
   }
 
   if(result === "steal"){
-    let leader = Object.values(teams).sort((a,b)=>b.score-a.score)[0]
-    if(leader && leader !== team){
+    let leader = Object.values(teams)
+      .filter(t => t !== team)
+      .sort((a,b)=>b.score-a.score)[0]
+
+    if(leader){
       leader.score -= 50
       team.score += 50
+      text = "I har stjålet 50 point fra førerholdet!"
+    } else {
+      text = "Ingen at stjæle fra – I slap heldigt!"
     }
-    text = "I har stjålet 50 point fra førerholdet!"
   }
+
+  team.solved.add(rewardKey)
 
   res.send(layout("Chance", `
     <div class="card">
