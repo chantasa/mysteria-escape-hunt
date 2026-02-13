@@ -405,23 +405,23 @@ function layout(title, body, autoRefresh = false) {
 }
 
 .cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  justify-content: center;
   gap: 16px;
   margin-top: 20px;
 }
 
 .flip-card {
+  width: 100px;
+  height: 150px;
   perspective: 1000px;
-  width: 100%;
-  aspect-ratio: 3 / 4;
   cursor: pointer;
 }
 
 .flip-inner {
-  position: relative;
   width: 100%;
   height: 100%;
+  position: relative;
   transition: transform 0.6s;
   transform-style: preserve-3d;
 }
@@ -430,31 +430,37 @@ function layout(title, body, autoRefresh = false) {
   transform: rotateY(180deg);
 }
 
-.card-front {
-  font-size: 1.8rem;
-}
-
+.card-front,
 .card-back {
-  font-size: 0.9rem;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
   padding: 10px;
   text-align: center;
 }
 
-
+/* Forside */
 .card-front {
-  background: linear-gradient(145deg, #1f332a, #162820);
-  border: 1px solid #3f6b58;
+  background: linear-gradient(145deg, #0f1b17, #162820);
+  border: 2px solid #d4b26a;
+  color: #d4b26a;
   font-size: 2rem;
 }
 
+/* Bagside */
 .card-back {
-  background: linear-gradient(145deg, #2a1f0f, #1b1409);
-  border: 1px solid #d4b26a;
+  background: linear-gradient(145deg, #3a2a12, #1f1507);
+  border: 2px solid #d4b26a;
+  color: #f5e6c3;
   transform: rotateY(180deg);
-}
-
-.flip-card.disabled {
-  opacity: 0.3;
+  font-size: 0.85rem;
 }
 
 
