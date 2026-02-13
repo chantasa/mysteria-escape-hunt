@@ -417,10 +417,10 @@ function layout(title, body, autoRefresh = false) {
 }
 
 .flip-card {
-  width: 100px;
-  height: 150px;
+  width: 110px;
+  height: 160px;
   perspective: 1000px;
-  cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .flip-inner {
