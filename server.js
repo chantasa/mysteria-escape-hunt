@@ -194,28 +194,44 @@ app.get("/game/:code",(req,res)=>{
 });
 
 app.get("/post/:code/:id",(req,res)=>{
-  const team=teams[req.params.code];
-  const post=POSTS.find(p=>p.id==req.params.id);
-  if(!team||!post) return res.redirect("/");
+  const team = teams[req.params.code];
+  const post = POSTS.find(p=>p.id==req.params.id);
+
+  if(!team || !post) return res.redirect("/");
+
+  // 🔒 LÅS POSTEN HVIS DEN ER LØST
+  if(team.solved.has(post.id)){
+    return res.redirect(`/game/${req.params.code}`);
+  }
 
   res.send(layout(post.name,`
     <div class="card">
+      <h3>Point: ${team.score}</h3>
+    </div>
+
+    <div class="card">
       <h2>${post.name}</h2>
       <p>${post.question}</p>
+
       <form method="POST">
-        <input name="answer">
+        <input name="answer" required>
         <button class="btn">Svar</button>
       </form>
+
       <br>
+
       <form method="POST" action="/hint/${req.params.code}/${post.id}/1">
         <button class="btn">Køb hint 1 (-10)</button>
       </form>
+
       <form method="POST" action="/hint/${req.params.code}/${post.id}/2">
         <button class="btn">Køb hint 2 (-40)</button>
       </form>
     </div>
   `));
 });
+
+
 
 app.post("/hint/:code/:id/:nr",(req,res)=>{
   const team=teams[req.params.code];
