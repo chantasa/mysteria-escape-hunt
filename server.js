@@ -783,7 +783,91 @@ app.post("/post/:code/:postId/keep", (req, res) => {
     </div>
   `));
 });
+app.post("/post/:code/:postId/chance", (req, res) => {
+  const { code, postId } = req.params;
+  const team = teams[code];
+  const post = POSTS.find(p => p.id == postId);
 
+  if (!team || !post) return res.send("Fejl");
+
+  const state = team.postStates[post.id];
+
+  if (state.rewardChosen) {
+    return res.redirect(`/game/${code}`);
+  }
+
+  const roll = Math.random();
+  let resultText = "";
+  let pointChange = 0;
+
+  if (roll < 0.5) {
+    pointChange = 200;
+    resultText = "🔥 Jackpot! I får 200 point!";
+  } else if (roll < 0.8) {
+    pointChange = 0;
+    resultText = "😅 Ingen gevinst denne gang.";
+  } else {
+    pointChange = -100;
+    resultText = "💀 Av! I mister 100 point!";
+  }
+
+  team.score += pointChange;
+  team.solvedPosts.push(post.id);
+  state.rewardChosen = true;
+
+  res.send(layout("Chance resultat", `
+    <div class="card">
+      <h2>${resultText}</h2>
+      <p>Point ændring: <strong>${pointChange}</strong></p>
+      <a href="/game/${code}">
+        <button class="answer-btn">Tilbage til spillet</button>
+      </a>
+    </div>
+  `));
+});
+
+app.post("/post/:code/:postId/chance", (req, res) => {
+  const { code, postId } = req.params;
+  const team = teams[code];
+  const post = POSTS.find(p => p.id == postId);
+
+  if (!team || !post) return res.send("Fejl");
+
+  const state = team.postStates[post.id];
+
+  if (state.rewardChosen) {
+    return res.redirect(`/game/${code}`);
+  }
+
+  const roll = Math.random();
+  let resultText = "";
+  let pointChange = 0;
+
+  if (roll < 0.5) {
+    pointChange = 200;
+    resultText = "🔥 Jackpot! I får 200 point!";
+  } else if (roll < 0.8) {
+    pointChange = 0;
+    resultText = "😅 Ingen gevinst denne gang.";
+  } else {
+    pointChange = -100;
+    resultText = "💀 Av! I mister 100 point!";
+  }
+
+  team.score += pointChange;
+  team.solvedPosts.push(post.id);
+  state.rewardChosen = true;
+
+  res.send(layout("Chance resultat", `
+    <div class="card">
+      <h2>${resultText}</h2>
+      <p>Point ændring: <strong>${pointChange}</strong></p>
+      <a href="/game/${code}">
+        <button class="answer-btn">Tilbage til spillet</button>
+      </a>
+    </div>
+  `));
+});
 
 /* ============================
    GM DASHBOARD
