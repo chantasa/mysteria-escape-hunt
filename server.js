@@ -3,105 +3,32 @@ import express from "express";
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 
-const ADMIN_KEY = process.env.ADMIN_KEY || "admin123";
-const GAME_MINUTES = 75;
+const PORT = process.env.PORT || 3000;
 
-/* =============================
-   DATA
-============================= */
+/* ==============================
+   BASIC DATA
+============================== */
 
-const TEAM_CODES = Array.from({ length: 10 }, (_, i) => `HOLD${i + 1}`);
-
-const POSTS = Array.from({ length: 20 }, (_, i) => ({
-  id: i + 1,
-  name: [
-    "Dragernes Dal",
-    "Den Dunkle Sti",
-    "Skovens Hjerte",
-    "Måneskinnets Eng",
-    "Tågens Kløft",
-    "Ravnenes Rede",
-    "Den Glemte Lund",
-    "Skyggesøen",
-    "Stormens Lysning",
-    "De Vilde Rødder",
-    "Flammernes Fald",
-    "Elvernes Port",
-    "Den Tavse Kilde",
-    "Krystalhulen",
-    "Vindens Vej",
-    "Den Skæve Eg",
-    "Frostens Bue",
-    "Ugleklippen",
-    "Den Sorte Bæk",
-    "Stjerneskoven",
-  ][i],
-  question: "Indtast det korrekte svar:",
-  answer: "TEST",
-  hint1: "Hint 1: Tænk simpelt.",
-  hint2: "Hint 2: Det er TEST.",
-}));
-
-/* =============================
-   STATE
-============================= */
+const TEAM_CODES = ["HOLD1","HOLD2","HOLD3","HOLD4","HOLD5"];
 
 const teams = {};
-let gameState = {
-  status: "idle",
-  start: null,
-  end: null,
-};
 
-function resetGame() {
-  for (let code of TEAM_CODES) {
-    teams[code] = {
-      name: "",
-      score: 50,
-      solved: new Set(),
-      hints: {},
-      lastChance: null,
-    };
-  }
-  gameState = { status: "idle", start: null, end: null };
-}
+TEAM_CODES.forEach(code => {
+  teams[code] = {
+    name: code,
+    score: 50, // starter med 50 point
+    solved: new Set()
+  };
+});
 
-resetGame();
+const POSTS = [
+  { id:1, name:"Dragernes Dal", question:"Hvad er svaret?", answer:"ILD", hint1:"Det er varmt", hint2:"Drager ånder det" },
+  { id:2, name:"Den Dunkle Sti", question:"Hvad er svaret?", answer:"SKYGGE", hint1:"Du har den altid", hint2:"Den følger dig" },
+];
 
-/* =============================
-   HELPERS
-============================= */
-
-function now() {
-  return Date.now();
-}
-
-function isRunning() {
-  if (gameState.status !== "running") return false;
-  if (now() >= gameState.end) {
-    gameState.status = "ended";
-    return false;
-  }
-  return true;
-}
-
-function isEnded() {
-  if (gameState.status === "running") isRunning();
-  return gameState.status === "ended";
-}
-
-function timeLeft() {
-  if (!isRunning()) return "0:00";
-  let ms = gameState.end - now();
-  let s = Math.floor(ms / 1000);
-  let m = Math.floor(s / 60);
-  s = s % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-/* =============================
+/* ==============================
    LAYOUT
-============================= */
+============================== */
 
 function layout(title, body) {
   return `
@@ -122,7 +49,6 @@ body{
   min-height:100vh;
   display:flex;
   justify-content:center;
-  align-items:flex-start;
   padding:20px 15px;
 }
 
@@ -133,16 +59,10 @@ body{
 
 .card{
   background:rgba(255,255,255,0.06);
-  backdrop-filter: blur(6px);
   border:1px solid rgba(255,255,255,0.1);
   border-radius:18px;
   padding:20px;
   margin-bottom:20px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.4);
-}
-
-h1,h2,h3{
-  margin-top:0;
 }
 
 .btn{
@@ -195,185 +115,145 @@ input{
 
 .post-box:hover{
   transform:translateY(-4px);
-  box-shadow:0 8px 20px rgba(0,0,0,0.6);
-  border-color:#5b7cff;
-  background:linear-gradient(145deg,#222867,#171d40);
 }
 
 .solved{
   background:linear-gradient(145deg,#1f4d37,#17352a);
   border-color:#2ecc71;
 }
+</style>
+</head>
+<body>
+<div class="wrap">
+${body}
+</div>
+</body>
+</html>
+`;
+}
 
-/* =============================
-   ROUTES
-============================= */
+/* ==============================
+   PLAYER ROUTES
+============================== */
 
-app.get("/", (req, res) => res.redirect("/login"));
+app.get("/", (req,res)=> res.redirect("/login"));
 
-app.get("/login", (req, res) => {
-  res.send(layout("Login", `
-    <div class="card">
-      <h2>Indtast holdkode</h2>
-      <form method="POST">
-        <input name="code" required>
-        <button class="btn">Fortsæt</button>
-      </form>
-    </div>
+app.get("/login",(req,res)=>{
+  res.send(layout("Login",`
+  <div class="card">
+    <h2>Indtast holdkode</h2>
+    <form method="POST">
+      <input name="code" required>
+      <button class="btn">Fortsæt</button>
+    </form>
+  </div>
   `));
 });
 
-app.get("/name/:code", (req, res) => {
-  res.send(layout("Navn", `
-    <div class="card">
-      <h2>Indtast holdnavn</h2>
-      <form method="POST">
-        <input name="name" required>
-        <button class="btn">Fortsæt</button>
-      </form>
-    </div>
+app.post("/login",(req,res)=>{
+  const code=req.body.code?.toUpperCase().trim();
+  if(!teams[code]) return res.redirect("/login");
+  res.redirect("/name/"+code);
+});
+
+app.get("/name/:code",(req,res)=>{
+  res.send(layout("Navn",`
+  <div class="card">
+    <h2>Indtast holdnavn</h2>
+    <form method="POST">
+      <input name="name" required>
+      <button class="btn">Start spil</button>
+    </form>
+  </div>
   `));
 });
 
 app.post("/name/:code",(req,res)=>{
-  teams[req.params.code].name=req.body.name
-  res.redirect(`/game/${req.params.code}`);
-})
+  teams[req.params.code].name=req.body.name;
+  res.redirect("/game/"+req.params.code);
+});
 
 app.get("/game/:code",(req,res)=>{
-  let team=teams[req.params.code]
-  if(!team)return res.redirect("/login")
+  const team=teams[req.params.code];
+  if(!team) return res.redirect("/login");
 
-  let postsHTML=POSTS.map(p=>`
-<a href="/post/${req.params.code}/${p.id}" class="post-box ${team.solved.has(p.id)?"solved":""}">
-<div>${p.id}</div>
-<div>${p.name}</div>
-</a>`).join("")
+  const postsHTML = POSTS.map(p=>`
+    <a href="/post/${req.params.code}/${p.id}" class="post-box ${team.solved.has(p.id)?"solved":""}">
+      <div>${p.id}</div>
+      <div>${p.name}</div>
+    </a>
+  `).join("");
 
   res.send(layout("Game",`
-<div class="card">
-<h2>${team.name}</h2>
-<p>Score: ${team.score}</p>
-${isRunning()?`<p>Tid tilbage: ${timeLeft()}</p>`:""}
-</div>
-<div class="grid">${postsHTML}</div>
-`))
-})
+    <div class="card">
+      <h2>${team.name}</h2>
+      <p>Score: ${team.score}</p>
+    </div>
+    <div class="grid">${postsHTML}</div>
+  `));
+});
 
 app.get("/post/:code/:id",(req,res)=>{
-  let team=teams[req.params.code]
-  let post=POSTS.find(p=>p.id==req.params.id)
-  if(!team||!post)return res.redirect("/")
+  const team=teams[req.params.code];
+  const post=POSTS.find(p=>p.id==req.params.id);
+  if(!team||!post) return res.redirect("/");
 
   res.send(layout(post.name,`
-<div class="card">
-<h2>${post.name}</h2>
-<p>${post.question}</p>
-<form method="POST">
-<input name="answer">
-<button class="btn">Svar</button>
-</form>
-<br>
-<form method="POST" action="/hint/${req.params.code}/${post.id}/1">
-<button class="btn">Køb hint 1 (-10)</button>
-</form>
-<form method="POST" action="/hint/${req.params.code}/${post.id}/2">
-<button class="btn">Køb hint 2 (-40)</button>
-</form>
-</div>
-`))
-})
+    <div class="card">
+      <h2>${post.name}</h2>
+      <p>${post.question}</p>
+      <form method="POST">
+        <input name="answer">
+        <button class="btn">Svar</button>
+      </form>
+      <br>
+      <form method="POST" action="/hint/${req.params.code}/${post.id}/1">
+        <button class="btn">Køb hint 1 (-10)</button>
+      </form>
+      <form method="POST" action="/hint/${req.params.code}/${post.id}/2">
+        <button class="btn">Køb hint 2 (-40)</button>
+      </form>
+    </div>
+  `));
+});
 
 app.post("/hint/:code/:id/:nr",(req,res)=>{
-  let team=teams[req.params.code]
-  let post=POSTS.find(p=>p.id==req.params.id)
-  let cost=req.params.nr==1?10:40
-  team.score-=cost
-  let hint=req.params.nr==1?post.hint1:post.hint2
+  const team=teams[req.params.code];
+  const post=POSTS.find(p=>p.id==req.params.id);
+  const cost=req.params.nr==1?10:40;
+  team.score-=cost;
+  const hint=req.params.nr==1?post.hint1:post.hint2;
+
   res.send(layout("Hint",`
-<div class="card">
-<h2>Hint</h2>
-<p>${hint}</p>
-<p>- ${cost} point</p>
-<a class="btn" href="/post/${req.params.code}/${post.id}">Tilbage</a>
-</div>`))
-})
+    <div class="card">
+      <h2>Hint</h2>
+      <p>${hint}</p>
+      <p>- ${cost} point</p>
+      <a class="btn" href="/post/${req.params.code}/${post.id}">Tilbage</a>
+    </div>
+  `));
+});
 
 app.post("/post/:code/:id",(req,res)=>{
-  let team=teams[req.params.code]
-  let post=POSTS.find(p=>p.id==req.params.id)
-  let answer=req.body.answer?.toUpperCase().trim()
+  const team=teams[req.params.code];
+  const post=POSTS.find(p=>p.id==req.params.id);
+  const answer=req.body.answer?.toUpperCase().trim();
 
   if(answer===post.answer){
-    team.solved.add(post.id)
-    return res.send(layout("Korrekt",`
-<div class="card">
-<h2>Korrekt – I har løst opgaven!</h2>
-<div class="point-win">+100 point</div>
-<br>
-<a class="btn" href="/reward/${req.params.code}/${post.id}/safe">Vælg jeres 100 point</a>
-<br><br>
-<a class="btn" href="/reward/${req.params.code}/${post.id}/chance">Vælg chancen</a>
-</div>`))
+    team.solved.add(post.id);
+    team.score+=100;
+    return res.redirect("/game/"+req.params.code);
   }else{
-    team.score-=5
+    team.score-=5;
     return res.send(layout("Forkert",`
-<div class="card">
-<h2>Forkert svar -5 point</h2>
-<a class="btn" href="/post/${req.params.code}/${post.id}">Prøv igen</a>
-</div>`))
+      <div class="card">
+        <h2>Forkert svar -5 point</h2>
+        <a class="btn" href="/post/${req.params.code}/${post.id}">Prøv igen</a>
+      </div>
+    `));
   }
-})
+});
 
-app.get("/reward/:code/:id/safe",(req,res)=>{
-  let team=teams[req.params.code]
-  team.score+=100
-  res.redirect(`/game/${req.params.code}`)
-})
-
-function weightedChance(team){
-  const options=[
-    {type:"double",weight:35},
-    {type:"minus",weight:20},
-    {type:"steal",weight:15},
-  ]
-  let total=options.reduce((a,b)=>a+b.weight,0)
-  let r=Math.random()*total
-  for(let opt of options){
-    if(r<opt.weight)return opt.type
-    r-=opt.weight
-  }
-}
-
-app.get("/reward/:code/:id/chance",(req,res)=>{
-  let team=teams[req.params.code]
-  let result=weightedChance(team)
-
-  let text=""
-  if(result==="double"){team.score+=200;text="Tillykke! +200 point"}
-  if(result==="minus"){team.score-=50;text="Desværre! -50 point"}
-  if(result==="steal"){
-    let leader=Object.values(teams).sort((a,b)=>b.score-a.score)[0]
-    if(leader!==team){
-      leader.score-=50
-      team.score+=50
-    }
-    text="I har stjålet 50 point!"
-  }
-
-  res.send(layout("Chance",`
-<div class="card">
-<h2>Chancen er valgt</h2>
-<div class="flip-container">
-<div class="flip-card flipped">
-<div class="flip-front">?</div>
-<div class="flip-back">${text}</div>
-</div>
-</div>
-<br>
-<a class="btn" href="/game/${req.params.code}">Tilbage</a>
-</div>`))
-})
 
 /* =============================
    ADMIN
@@ -403,8 +283,8 @@ ${isRunning()?`<p>Tid tilbage: ${timeLeft()}</p>`:""}
 <h3>Leaderboard</h3>
 <ul>${list}</ul>
 </div>
-`))
-})
+`));
+});
 
 app.post("/admin/start",(req,res)=>{
   if(req.query.key!==ADMIN_KEY)return res.send("Ingen adgang")
