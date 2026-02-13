@@ -213,14 +213,14 @@ app.get("/", (req, res) => res.redirect("/login"));
 
 app.get("/login", (req, res) => {
   res.send(layout("Login", `
-<div class="card">
-<h2>Indtast holdkode</h2>
-<form method="POST">
-<input name="code" required>
-<button class="btn">Fortsæt</button>
-</form>
-</div>
-`));
+    <div class="card">
+      <h2>Indtast holdkode</h2>
+      <form method="POST">
+        <input name="code" required>
+        <button class="btn">Fortsæt</button>
+      </form>
+    </div>
+  `));
 });
 
 app.post("/login", (req, res) => {
