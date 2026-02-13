@@ -796,35 +796,57 @@ app.post("/post/:code/:postId/chance", (req, res) => {
     return res.redirect(`/game/${code}`);
   }
 
-  const roll = Math.random();
-  let resultText = "";
-  let pointChange = 0;
+  // 🎲 3 mulige udfald
+  const outcomes = ["double", "minus", "steal"];
+  const result = outcomes[Math.floor(Math.random() * outcomes.length)];
 
-  if (roll < 0.5) {
-    pointChange = 200;
-    resultText = "🔥 Jackpot! I får 200 point!";
-  } else if (roll < 0.8) {
-    pointChange = 0;
-    resultText = "😅 Ingen gevinst denne gang.";
-  } else {
-    pointChange = -100;
-    resultText = "💀 Av! I mister 100 point!";
+  let message = "";
+
+  if (result === "double") {
+    team.score += 200;
+    message = "🎯 Dobbelt op! I får 200 point!";
   }
 
-  team.score += pointChange;
+  if (result === "minus") {
+    team.score -= 50;
+    message = "💀 Uheldigt! I mister 50 point.";
+  }
+
+  if (result === "steal") {
+
+    // find førende hold (undtagen jer selv)
+    const otherTeams = Object.entries(teams)
+      .filter(([c]) => c !== code);
+
+    if (otherTeams.length > 0) {
+
+      const leader = otherTeams
+        .sort((a, b) => b[1].score - a[1].score)[0][1];
+
+      const stealAmount = Math.min(50, leader.score);
+
+      leader.score -= stealAmount;
+      team.score += stealAmount;
+
+      message = `🗡 I stjal ${stealAmount} point fra det førende hold!`;
+    } else {
+      message = "Ingen at stjæle fra 😅";
+    }
+  }
+
   team.solvedPosts.push(post.id);
   state.rewardChosen = true;
 
-  res.send(layout("Chance resultat", `
+  res.send(layout("Chance!", `
     <div class="card">
-      <h2>${resultText}</h2>
-      <p>Point ændring: <strong>${pointChange}</strong></p>
+      <h2>${message}</h2>
       <a href="/game/${code}">
         <button class="answer-btn">Tilbage til spillet</button>
       </a>
     </div>
   `));
 });
+
 
 app.post("/post/:code/:postId/chance", (req, res) => {
   const { code, postId } = req.params;
