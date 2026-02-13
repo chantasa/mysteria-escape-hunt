@@ -3,533 +3,377 @@ import express from "express";
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 
-const PORT = process.env.PORT || 3000;
+const ADMIN_KEY = process.env.ADMIN_KEY || "dev-admin-key";
+const GAME_MINUTES = 75;
 
-/* ==============================
-   BASIC DATA
-============================== */
+/* ============================
+   TEAM CODES
+============================ */
+const TEAM_CODES = Array.from({ length: 10 }, (_, i) => `HOLD${i + 1}`);
 
-const TEAM_CODES = ["HOLD1","HOLD2","HOLD3","HOLD4","HOLD5"];
-
-const teams = {};
-
-TEAM_CODES.forEach(code => {
-  teams[code] = {
-    name: code,
-    score: 50, // starter med 50 point
-    solved: new Set()
-     chanceDeck: createChanceDeck()
-  };
-});
-
+/* ============================
+   POSTS
+============================ */
 const POSTS = [
-  { id:1, name:"Dragernes Dal", question:"Hvad er svaret?", answer:"ILD", hint1:"Det er varmt", hint2:"Drager ånder det" },
-  { id:2, name:"Den Dunkle Sti", question:"Hvad er svaret?", answer:"SKYGGE", hint1:"Du har den altid", hint2:"Den følger dig" },
-];
+  "Dragernes Dal",
+  "Den Dunkle Sti",
+  "Runernes Lysning",
+  "Den Tavse Kilde",
+  "Skyggernes Kreds",
+  "Måneporten",
+  "Den Glemte Høj",
+  "Skovens Puls",
+  "Den Brændte Eg",
+  "Stenvogternes Plads",
+  "Den Forladte Hytte",
+  "Elvernes Grænse",
+  "Tågernes Bro",
+  "Den Hule Klippe",
+  "Vildskovens Hjerte",
+  "Den Faldne Sten",
+  "Nordlysets Port",
+  "Den Knækkede Gren",
+  "Mørkets Spejl",
+  "Den Sidste Ring"
+].map((title, i) => ({
+  id: i + 1,
+  title,
+  correctAnswer: `SVAR${i + 1}`
+}));
 
-/* ==============================
+/* ============================
+   STATE
+============================ */
+const teams = {};
+const gameState = {
+  status: "idle",
+  startTime: null,
+  endTime: null
+};
+
+function now() { return Date.now(); }
+
+function isRunning() {
+  if (gameState.status !== "running") return false;
+  if (now() >= gameState.endTime) {
+    gameState.status = "ended";
+    return false;
+  }
+  return true;
+}
+
+function timeLeft() {
+  if (!isRunning()) return 0;
+  return Math.max(0, gameState.endTime - now());
+}
+
+function formatTime(ms) {
+  const total = Math.floor(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+/* ============================
    LAYOUT
-============================== */
-
-function layout(title, body) {
+============================ */
+function layout(title, body, autoRefresh = false) {
   return `
-<!DOCTYPE html>
-<html lang="da">
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title}</title>
+  <html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    ${autoRefresh ? `<meta http-equiv="refresh" content="5">` : ""}
+    <title>${title}</title>
+    <style>
+      body {
+        margin:0;
+        min-height:100vh;
+        display:flex;
+        justify-content:center;
+        background: radial-gradient(circle at top, #0f1b17, #060a08);
+        color: #f2e8c8;
+        font-family: "Georgia", serif;
+      }
 
-<style>
-* { box-sizing: border-box; }
+      .container {
+        width:100%;
+        max-width:1100px;
+        padding:20px;
+      }
 
-body{
-  margin:0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto;
-  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  color:#ffffff;
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  padding:20px 15px;
+      .card {
+        background:#0f1b17;
+        border:1px solid #2e4a3d;
+        padding:20px;
+        border-radius:16px;
+        margin-bottom:20px;
+        box-shadow:0 0 20px rgba(0,0,0,0.4);
+      }
+
+      h1, h2 { color:#d4b26a; }
+
+      button {
+        background:#1f332a;
+        border:1px solid #3f6b58;
+        color:#f2e8c8;
+        padding:10px 16px;
+        border-radius:10px;
+        cursor:pointer;
+      }
+
+      input {
+        padding:10px;
+        border-radius:8px;
+        border:1px solid #3f6b58;
+        background:#08110e;
+        color:white;
+        width:100%;
+      }
+
+      .score {
+        font-size:1.2rem;
+        margin-top:10px;
+      }
+
+  /* Links uden underline */
+a {
+  text-decoration: none;
+  color: inherit;
 }
 
-.wrap{
-  width:100%;
-  max-width:480px;
+/* GRID – mobil først */
+a {
+  text-decoration: none;
+  color: inherit;
+  display:block;         /* vigtig */
+  height:100%;           /* vigtig */
 }
 
-.card{
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:18px;
-  padding:20px;
-  margin-bottom:20px;
-}
-
-.btn{
-  display:inline-block;
-  padding:12px 18px;
-  border-radius:12px;
-  background:#1f3a56;
-  color:white;
-  text-decoration:none;
-  border:none;
-  font-weight:600;
-  cursor:pointer;
-}
-
-.btn:hover{
-  background:#294b6d;
-}
-
-input{
-  width:100%;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,0.2);
-  background:rgba(0,0,0,0.3);
-  color:white;
-  margin-bottom:10px;
-}
-
-.grid{
+.grid {
   display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap:16px;
 }
 
-.post-box{
-  height:120px;
+@media (min-width:700px){
+  .grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width:1100px){
+  .grid { grid-template-columns: repeat(5, 1fr); }
+}
+
+.post-box {
+  background: linear-gradient(145deg, #162820, #0f1b17);
+  border: 1px solid #3f6b58;
+  border-radius: 18px;
+  aspect-ratio: 1 / 1;          /* ← Ens størrelse */
   display:flex;
   flex-direction:column;
-  justify-content:center;
   align-items:center;
-  border-radius:18px;
-  background:linear-gradient(145deg,#1a1f3a,#12172b);
-  border:1px solid #2e3b6b;
+  justify-content:center;
+  padding:15px;
   text-align:center;
-  font-weight:600;
-  color:#f5f7ff;
   transition:0.25s ease;
-  text-decoration:none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
-.post-box:hover{
-  transform:translateY(-4px);
+.post-number {
+  font-size:1.2rem;
+  font-weight:700;
+  color:#d4b26a;
+  margin-bottom:8px;
 }
 
-.solved{
-  background:linear-gradient(145deg,#1f4d37,#17352a);
-  border-color:#2ecc71;
-}
-</style>
-</head>
-<body>
-<div class="wrap">
-${body}
-</div>
-</body>
-</html>
-`;
+.post-title {
+  font-size:0.95rem;
+  color:#fff6cc;
+  line-height:1.3;
 }
 
-/* =============================
-   CHANCE DECK FUNCTION
-============================= */
+.post-box:hover {
+  background: linear-gradient(145deg, #1f3a30, #14241d);
+  transform: translateY(-3px);
+  border-color:#6ca889;
+}
 
-function createChanceDeck(){
 
-  let baseDeck = [
-    "double",
-    "double",
-    "minus",
-    "minus",
-    "steal"
-  ]
-
-  function shuffle(array){
-    for(let i = array.length - 1; i > 0; i--){
-      let j = Math.floor(Math.random() * (i + 1))
-      ;[array[i], array[j]] = [array[j], array[i]]
-    }
-    return array
-  }
-
-  let deck
-  let valid = false
-
-  while(!valid){
-    deck = shuffle([...baseDeck])
-    valid = true
-
-    for(let i = 1; i < deck.length; i++){
-      if(deck[i] === "minus" && deck[i-1] === "minus"){
-        valid = false
-        break
+      .leaderboard li {
+        margin-bottom:8px;
       }
-    }
-  }
 
-  return deck
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      ${body}
+    </div>
+  </body>
+  </html>
+  `;
 }
 
+/* ============================
+   LOGIN FLOW
+============================ */
 
-/* ==============================
-   PLAYER ROUTES
-============================== */
+app.get("/", (req, res) => res.redirect("/login"));
 
-app.get("/", (req,res)=> res.redirect("/login"));
-
-app.get("/login",(req,res)=>{
-  res.send(layout("Login",`
-  <div class="card">
-    <h2>Indtast holdkode</h2>
-    <form method="POST">
-      <input name="code" required>
-      <button class="btn">Fortsæt</button>
-    </form>
-  </div>
+app.get("/login", (req, res) => {
+  res.send(layout("Login", `
+    <div class="card">
+      <h1>Mysteria</h1>
+      <form method="POST">
+        <input name="code" required placeholder="HOLD1"/>
+        <button>Fortsæt</button>
+      </form>
+    </div>
   `));
 });
 
-app.post("/login",(req,res)=>{
-  const code=req.body.code?.toUpperCase().trim();
-  if(!teams[code]) return res.redirect("/login");
-  res.redirect("/name/"+code);
+app.post("/login", (req, res) => {
+  const code = (req.body.code || "").toUpperCase().trim();
+  if (!TEAM_CODES.includes(code)) {
+    return res.send(layout("Fejl", `<div class="card"><h2>Ugyldig kode</h2></div>`));
+  }
+  res.redirect(`/teamname/${code}`);
 });
 
-app.get("/name/:code",(req,res)=>{
-  res.send(layout("Navn",`
-  <div class="card">
-    <h2>Indtast holdnavn</h2>
-    <form method="POST">
-      <input name="name" required>
-      <button class="btn">Start spil</button>
-    </form>
-  </div>
+app.get("/teamname/:code", (req, res) => {
+  res.send(layout("Holdnavn", `
+    <div class="card">
+      <h1>Vælg jeres holdnavn</h1>
+      <form method="POST">
+        <input name="name" required/>
+        <button>Fortsæt</button>
+      </form>
+    </div>
   `));
 });
 
-app.post("/name/:code",(req,res)=>{
-  teams[req.params.code].name=req.body.name;
-  res.redirect("/game/"+req.params.code);
+app.post("/teamname/:code", (req, res) => {
+  teams[req.params.code] = {
+    name: req.body.name,
+    score: 50
+  };
+  res.redirect(`/intro/${req.params.code}`);
 });
 
-app.get("/game/:code",(req,res)=>{
-  const team=teams[req.params.code];
-  if(!team) return res.redirect("/login");
+app.get("/intro/:code", (req, res) => {
+  const team = teams[req.params.code];
+  res.send(layout("Intro", `
+    <div class="card">
+      <h1>Velkommen ${team.name}</h1>
+      <p>Kun de mest værdige vil samle flest point.</p>
+      <form method="POST">
+        <button>Træd ind i skoven</button>
+      </form>
+    </div>
+  `));
+});
 
-  const postsHTML = POSTS.map(p=>`
-    <a href="/post/${req.params.code}/${p.id}" class="post-box ${team.solved.has(p.id)?"solved":""}">
-      <div>${p.id}</div>
-      <div>${p.name}</div>
+app.post("/intro/:code", (req, res) => {
+  res.redirect(`/game/${req.params.code}`);
+});
+
+/* ============================
+   GAME
+============================ */
+
+app.get("/game/:code", (req, res) => {
+  if (!isRunning()) {
+    return res.send(layout("Venter", `
+      <div class="card"><h2>Spillet er ikke startet endnu.</h2></div>
+    `));
+  }
+
+  const team = teams[req.params.code];
+
+  const posts = POSTS.map(p => `
+    <a href="#">
+      <div class="post-box">
+        <strong>${p.id}. ${p.title}</strong>
+      </div>
     </a>
   `).join("");
 
-  res.send(layout("Game",`
+  res.send(layout("Spil", `
     <div class="card">
-      <h2>${team.name}</h2>
-      <p>Score: ${team.score}</p>
-    </div>
-    <div class="grid">${postsHTML}</div>
-  `));
-});
-
-app.get("/post/:code/:id",(req,res)=>{
-  const team = teams[req.params.code];
-  const post = POSTS.find(p=>p.id==req.params.id);
-
-  if(!team || !post) return res.redirect("/");
-
-  // 🔒 LÅS POSTEN HVIS DEN ER LØST
-  if(team.solved.has(post.id)){
-    return res.redirect(`/game/${req.params.code}`);
-  }
-
-  res.send(layout(post.name,`
-    <div class="card">
-      <h3>Point: ${team.score}</h3>
+      <h1>${team.name}</h1>
+      <div class="score">Jeres point: <strong>${team.score}</strong></div>
+      <div>⏱ Tid tilbage: ${formatTime(timeLeft())}</div>
     </div>
 
     <div class="card">
-      <h2>${post.name}</h2>
-      <p>${post.question}</p>
-
-      <form method="POST">
-        <input name="answer" required>
-        <button class="btn">Svar</button>
-      </form>
-
-      <br>
-
-      <form method="POST" action="/hint/${req.params.code}/${post.id}/1">
-        <button class="btn">Køb hint 1 (-10)</button>
-      </form>
-
-      <form method="POST" action="/hint/${req.params.code}/${post.id}/2">
-        <button class="btn">Køb hint 2 (-40)</button>
-      </form>
-    </div>
-  `));
-});
-
-
-
-app.post("/hint/:code/:id/:nr",(req,res)=>{
-  const team=teams[req.params.code];
-  const post=POSTS.find(p=>p.id==req.params.id);
-  const cost=req.params.nr==1?10:40;
-  team.score-=cost;
-  const hint=req.params.nr==1?post.hint1:post.hint2;
-
-  res.send(layout("Hint",`
-    <div class="card">
-      <h2>Hint</h2>
-      <p>${hint}</p>
-      <p>- ${cost} point</p>
-      <a class="btn" href="/post/${req.params.code}/${post.id}">Tilbage</a>
-    </div>
-  `));
-});
-
-// ======================================
-// SVAR PÅ POST
-// ======================================
-
-app.post("/post/:code/:id",(req,res)=>{
-  let team = teams[req.params.code]
-  let post = POSTS.find(p=>p.id==req.params.id)
-
-  if(!team || !post) return res.redirect("/")
-
-  // 🔒 Hvis posten allerede er løst
-  if(team.solved.has(post.id)){
-    return res.redirect(`/game/${req.params.code}`)
-  }
-
-  let answer = req.body.answer?.toUpperCase().trim()
-
-  if(answer === post.answer){
-
-    // Markér post som løst
-    team.solved.add(post.id)
-
-    return res.send(layout("Korrekt", `
-      <div class="card">
-        <h2>Korrekt – I har løst opgaven!</h2>
-
-        <br>
-
-        <a class="btn" href="/reward/${req.params.code}/${post.id}/safe">
-          Vælg jeres 100 point
-        </a>
-
-        <br><br>
-
-        <a class="btn" href="/reward/${req.params.code}/${post.id}/chance">
-          Vælg chancen
-        </a>
+      <h2>Lokationer</h2>
+      <div class="grid">
+        ${posts}
       </div>
-    `))
-
-  } else {
-
-    team.score -= 5
-
-    return res.send(layout("Forkert", `
-      <div class="card">
-        <h2>Forkert svar -5 point</h2>
-        <a class="btn" href="/post/${req.params.code}/${post.id}">
-          Prøv igen
-        </a>
-      </div>
-    `))
-  }
-})
-
-
-// ======================================
-// SAFE REWARD
-// ======================================
-
-app.get("/reward/:code/:id/chance",(req,res)=>{
-  let team = teams[req.params.code]
-  if(!team) return res.redirect("/login")
-
-  let rewardKey = req.params.id + "_rewarded"
-
-  // 🔒 Hvis reward allerede taget
-  if(team.solved.has(rewardKey)){
-    return res.redirect(`/game/${req.params.code}`)
-  }
-
-  // Hvis deck er tomt → lav nyt
-  if(!team.chanceDeck || team.chanceDeck.length === 0){
-    team.chanceDeck = createChanceDeck()
-  }
-
-  // Træk øverste kort
-  let result = team.chanceDeck.shift()
-
-  let text = ""
-
-  if(result === "double"){
-    team.score += 200
-    text = "Tillykke! I fik dobbelt op – +200 point!"
-  }
-
-  if(result === "minus"){
-    team.score -= 50
-    text = "Desværre! I mistede 50 point."
-  }
-
-  if(result === "steal"){
-    let leader = Object.values(teams).sort((a,b)=>b.score-a.score)[0]
-    if(leader && leader !== team){
-      leader.score -= 50
-      team.score += 50
-    }
-    text = "I har stjålet 50 point fra førerholdet!"
-  }
-
-  team.solved.add(rewardKey)
-
-  res.send(layout("Chance", `
-    <div class="card">
-      <h2>Chancen er valgt</h2>
-      <p>${text}</p>
-      <br>
-      <a class="btn" href="/game/${req.params.code}">
-        Tilbage
-      </a>
     </div>
-  `))
-})
-
-
-// ======================================
-// CHANCE REWARD
-// ======================================
-
-app.get("/reward/:code/:id/chance",(req,res)=>{
-  let team = teams[req.params.code]
-  if(!team) return res.redirect("/login")
-
-  let rewardKey = req.params.id + "_rewarded"
-
-  // 🔒 Hvis reward allerede taget
-  if(team.solved.has(rewardKey)){
-    return res.redirect(`/game/${req.params.code}`)
-  }
-
-  const options = [
-    { type:"double", weight:40 },
-    { type:"minus", weight:30 },
-    { type:"steal", weight:20 }
-  ]
-
-  let total = options.reduce((a,b)=>a+b.weight,0)
-  let r = Math.random()*total
-  let result
-
-  for(let opt of options){
-    if(r < opt.weight){
-      result = opt.type
-      break
-    }
-    r -= opt.weight
-  }
-
-  let text = ""
-
-  if(result === "double"){
-    team.score += 200
-    text = "Tillykke! I fik dobbelt op – +200 point!"
-  }
-
-  if(result === "minus"){
-    team.score -= 50
-    text = "Desværre! I mistede 50 point."
-  }
-
-  if(result === "steal"){
-    let leader = Object.values(teams)
-      .filter(t => t !== team)
-      .sort((a,b)=>b.score-a.score)[0]
-
-    if(leader){
-      leader.score -= 50
-      team.score += 50
-      text = "I har stjålet 50 point fra førerholdet!"
-    } else {
-      text = "Ingen at stjæle fra – I slap heldigt!"
-    }
-  }
-
-  team.solved.add(rewardKey)
-
-  res.send(layout("Chance", `
-    <div class="card">
-      <h2>Chancen er valgt</h2>
-      <p>${text}</p>
-      <br>
-      <a class="btn" href="/game/${req.params.code}">
-        Tilbage
-      </a>
-    </div>
-  `))
-})
-
-
-/* =============================
-   ADMIN
-============================= */
-
-app.get("/admin",(req,res)=>{
-  if(req.query.key!==ADMIN_KEY)return res.send("Ingen adgang")
-  let list=Object.entries(teams)
-  .sort((a,b)=>b[1].score-a[1].score)
-  .map(([code,t],i)=>`<li>${i+1}. ${t.name||code} - ${t.score}</li>`).join("")
-  res.send(layout("Admin",`
-<div class="card">
-<h2>GM Dashboard</h2>
-<p>Status: ${gameState.status}</p>
-${isRunning()?`<p>Tid tilbage: ${timeLeft()}</p>`:""}
-<form method="POST" action="/admin/start?key=${ADMIN_KEY}">
-<button class="btn">Start spil</button>
-</form>
-<form method="POST" action="/admin/end?key=${ADMIN_KEY}">
-<button class="btn">Stop spil</button>
-</form>
-<form method="POST" action="/admin/reset?key=${ADMIN_KEY}">
-<button class="btn">Reset</button>
-</form>
-</div>
-<div class="card">
-<h3>Leaderboard</h3>
-<ul>${list}</ul>
-</div>
-`));
+  `));
 });
 
-app.post("/admin/start",(req,res)=>{
-  if(req.query.key!==ADMIN_KEY)return res.send("Ingen adgang")
-  gameState.status="running"
-  gameState.start=now()
-  gameState.end=now()+GAME_MINUTES*60000
-  res.redirect(`/admin?key=${ADMIN_KEY}`)
-})
+/* ============================
+   GM DASHBOARD
+============================ */
 
-app.post("/admin/end",(req,res)=>{
-  if(req.query.key!==ADMIN_KEY)return res.send("Ingen adgang")
-  gameState.status="ended"
-  res.redirect(`/admin?key=${ADMIN_KEY}`)
-})
+app.get("/admin", (req, res) => {
+  if (req.query.key !== ADMIN_KEY) return res.send("Ingen adgang");
 
-app.post("/admin/reset",(req,res)=>{
-  if(req.query.key!==ADMIN_KEY)return res.send("Ingen adgang")
-  resetGame()
-  res.redirect(`/admin?key=${ADMIN_KEY}`)
-})
+  const leaderboard = Object.entries(teams)
+    .sort((a,b) => b[1].score - a[1].score)
+    .map(([code, t], i) =>
+      `<li>#${i+1} ${t.name} (${code}) – ${t.score} point</li>`
+    ).join("");
 
-app.listen(process.env.PORT||3000)
+  let statusText = "Ikke startet";
+  if (isRunning()) statusText = "Kører – Tid tilbage: " + formatTime(timeLeft());
+  if (gameState.status === "ended") statusText = "Tiden er gået";
+
+  res.send(layout("GM", `
+    <div class="card">
+      <h1>GM Dashboard</h1>
+      <div>Status: ${statusText}</div>
+      <form method="POST" action="/admin/start?key=${ADMIN_KEY}">
+        <button>Start spil (${GAME_MINUTES} min)</button>
+      </form>
+      <form method="POST" action="/admin/end?key=${ADMIN_KEY}">
+        <button>Nødstop</button>
+      </form>
+      <form method="POST" action="/admin/reset?key=${ADMIN_KEY}">
+        <button>Reset</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Leaderboard</h2>
+      <ul class="leaderboard">
+        ${leaderboard}
+      </ul>
+    </div>
+  `, true));
+});
+
+app.post("/admin/start", (req, res) => {
+  if (req.query.key !== ADMIN_KEY) return res.send("Ingen adgang");
+  gameState.status = "running";
+  gameState.startTime = now();
+  gameState.endTime = now() + GAME_MINUTES * 60 * 1000;
+  res.redirect(`/admin?key=${ADMIN_KEY}`);
+});
+
+app.post("/admin/end", (req, res) => {
+  if (req.query.key !== ADMIN_KEY) return res.send("Ingen adgang");
+  gameState.status = "ended";
+  res.redirect(`/admin?key=${ADMIN_KEY}`);
+});
+
+app.post("/admin/reset", (req, res) => {
+  if (req.query.key !== ADMIN_KEY) return res.send("Ingen adgang");
+  for (let k in teams) delete teams[k];
+  gameState.status = "idle";
+  res.redirect(`/admin?key=${ADMIN_KEY}`);
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Mysteria running on", PORT));
