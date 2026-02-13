@@ -470,6 +470,50 @@ app.get("/game/:code", (req, res) => {
     </div>
   `));
 });
+app.get("/post/:code/:postId", (req, res) => {
+  const { code, postId } = req.params;
+  const team = teams[code];
+  const post = POSTS.find(p => p.id == postId);
+
+  if (!team || !post) return res.send("Fejl");
+
+  if (team.solvedPosts.includes(post.id)) {
+    return res.send(layout("Løst", `
+      <div class="card">
+        <h2>Denne opgave er allerede løst.</h2>
+        <a href="/game/${code}"><button>Tilbage</button></a>
+      </div>
+    `));
+  }
+
+  if (!team.postStates[post.id]) {
+    team.postStates[post.id] = {
+      hintsUsed: [],
+      answeredCorrect: false,
+      rewardChosen: false
+    };
+  }
+
+  const state = team.postStates[post.id];
+
+  res.send(layout(post.title, `
+    <div class="card">
+      <h2>${post.title}</h2>
+      <div>Jeres point: <strong>${team.score}</strong></div>
+    </div>
+
+    <div class="card">
+      <p>Her kommer opgaveteksten senere</p>
+      <form method="POST" action="/post/${code}/${post.id}/answer">
+        <input name="answer" required placeholder="Indtast svar"/>
+        <button>Svar</button>
+      </form>
+    </div>
+
+    <a href="/game/${code}"><button>Tilbage</button></a>
+  `));
+});
+
 
 /* ============================
    GM DASHBOARD
