@@ -405,15 +405,13 @@ function layout(title, body, autoRefresh = false) {
 }
 
 .cards {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  width: 100%;
-  max-width: 100%;
-  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  justify-items: center;
+  margin: 20px auto 0;
   padding: 0 10px;
+  max-width: 360px; /* holder dem samlet på mobil */
 }
 
 .flip-card {
