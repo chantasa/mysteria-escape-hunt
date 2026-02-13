@@ -220,8 +220,8 @@ function isRunning() {
 }
 
 function timeLeft() {
-  if (!isRunning()) return 0;
-  return Math.max(0, gameState.endTime - now());
+  if (gameState.status !== "running") return 0;
+  return Math.max(0, gameState.endTime - Date.now());
 }
 
 function formatTime(ms) {
@@ -556,23 +556,22 @@ app.post("/intro/:code", (req, res) => {
 ============================ */
 
 app.get("/game/:code", (req, res) => {
-  if (!isRunning()) {
+  if (gameState.status !== "running") {
     return res.send(layout("Venter", `
       <div class="card"><h2>Spillet er ikke startet endnu.</h2></div>
     `));
   }
 
   const team = teams[req.params.code];
+  const remaining = timeLeft();   // 👈 beregn kun én gang
 
-const posts = POSTS.map(p => {
-  const isSolved = team.solvedPosts.includes(p.id);
+  res.send(layout("Spil", `
+    <div class="card">
+      <h1>${team.name}</h1>
+      <div class="score">Jeres point: <strong>${team.score}</strong></div>
+      <div>⏱ Tid tilbage: ${formatTime(remaining)}</div>
+    </div>
 
-  return `
-    <a href="/post/${req.params.code}/${p.id}">
-      <div class="post-box ${isSolved ? "solved" : ""}">
-        <div class="post-number">${p.id}</div>
-        <div class="post-title">${p.title}</div>
-        </div>
     </a>
   `;
 }).join("");
