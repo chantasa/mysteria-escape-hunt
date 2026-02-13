@@ -331,43 +331,43 @@ function layout(title, body, autoRefresh = false) {
 
 .reward-choice {
   display:flex;
-  justify-content:center;
-  gap:30px;
-  margin-top:25px;
-  flex-wrap:wrap;
+  flex-direction:column;
+  gap:20px;
+  margin-top:30px;
 }
 
 .reward-btn {
+  width:100%;
+  padding:18px;
   font-size:1.2rem;
-  padding:16px 28px;
-  border-radius:14px;
   font-weight:700;
+  border-radius:14px;
   cursor:pointer;
   transition:0.25s ease;
+  letter-spacing:0.5px;
 }
 
 /* Behold point – gylden */
 .keep-btn {
-  background: linear-gradient(145deg, #c8a84a, #a8841e);
-  border: 2px solid #f0d77a;
-  color: #1a1300;
+  background: linear-gradient(145deg,#b9932f,#8a6a1f);
+  border:2px solid #e6c46a;
+  color:#1a1405;
 }
 
 .keep-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(240, 215, 122, 0.6);
+  transform:scale(1.02);
+  box-shadow:0 0 18px rgba(230,196,106,0.4);
 }
 
-/* Chance – mørkere dramatisk */
 .chance-btn {
-  background: linear-gradient(145deg, #1f3a30, #0f1b17);
-  border: 2px solid #5bd37c;
-  color: #5bd37c;
+  background: linear-gradient(145deg,#1c2a25,#0f1b17);
+  border:2px solid #5bd37c;
+  color:#5bd37c;
 }
 
 .chance-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(91, 211, 124, 0.5);
+  transform:scale(1.02);
+  box-shadow:0 0 18px rgba(91,211,124,0.4);
 }
 
 
@@ -746,13 +746,13 @@ if (answer === post.correctAnswer.toUpperCase()) {
     <div class="reward-choice">
   <form method="POST" action="/post/${code}/${post.id}/keep">
     <button class="reward-btn keep-btn">
-      🏆 Behold 100 point
+      Behold 100 point
     </button>
   </form>
 
   <form method="POST" action="/post/${code}/${post.id}/chance">
     <button class="reward-btn chance-btn">
-      🎲 Tag chancen
+      Tag chancen
     </button>
   </form>
 </div>
