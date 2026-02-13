@@ -106,86 +106,134 @@ function timeLeft() {
 function layout(title, body) {
   return `
 <!DOCTYPE html>
-<html>
+<html lang="da">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
-<style>
-body{margin:0;background:#0b0f1a;color:#f5f7ff;font-family:system-ui}
-.wrap{max-width:900px;margin:auto;padding:20px}
-.card{background:#12172b;border:1px solid #2e3b6b;border-radius:18px;padding:20px;margin-bottom:20px}
-.btn{display:inline-block;padding:10px 16px;background:#1f2a50;color:#fff;border-radius:12px;text-decoration:none;border:none;cursor:pointer}
-.btn:hover{background:#2d3c80}
-a{text-decoration:none;color:inherit}
 
-.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+<style>
+* { box-sizing: border-box; }
+
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto;
+  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color:#ffffff;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:20px 15px;
+}
+
+.wrap{
+  width:100%;
+  max-width:480px;
+}
+
+.card{
+  background:rgba(255,255,255,0.06);
+  backdrop-filter: blur(6px);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+
+h1,h2,h3{
+  margin-top:0;
+}
+
+.btn{
+  display:inline-block;
+  padding:12px 18px;
+  border-radius:12px;
+  background:#1f3a56;
+  color:white;
+  text-decoration:none;
+  border:none;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.btn:hover{
+  background:#294b6d;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.2);
+  background:rgba(0,0,0,0.3);
+  color:white;
+  margin-bottom:10px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
 
 .post-box{
-height:120px;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-border-radius:18px;
-background:linear-gradient(145deg,#1a1f3a,#12172b);
-border:1px solid #2e3b6b;
-text-align:center;
-font-weight:600;
-color:#f5f7ff;
-transition:0.25s ease;
+  height:110px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  border-radius:16px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.15);
+  text-align:center;
+  font-weight:600;
+  color:white;
+  transition:0.25s;
 }
+
 .post-box:hover{
-transform:translateY(-4px);
-box-shadow:0 8px 20px rgba(0,0,0,0.6);
-border-color:#5b7cff;
-background:linear-gradient(145deg,#222867,#171d40);
+  background:rgba(255,255,255,0.15);
+  transform:translateY(-3px);
 }
+
+.post-number{
+  font-size:18px;
+  font-weight:700;
+  opacity:0.7;
+  margin-bottom:6px;
+}
+
+.post-title{
+  font-size:15px;
+}
+
 .solved{
-background:linear-gradient(145deg,#1f4d37,#17352a);
-border-color:#2ecc71;
+  background:rgba(50,200,120,0.3);
 }
 
-.point-win{
-font-size:28px;
-font-weight:700;
-color:#2ecc71;
-text-align:center;
-animation:pop 0.6s ease-out;
-}
-@keyframes pop{
-0%{transform:scale(0.6);opacity:0}
-60%{transform:scale(1.2);opacity:1}
-100%{transform:scale(1)}
+.muted{
+  opacity:0.7;
+  font-size:14px;
 }
 
-.flip-container{perspective:1000px}
-.flip-card{
-width:100%;height:110px;
-position:relative;
-transform-style:preserve-3d;
-transition:transform 0.6s;
-cursor:pointer;
+@media (min-width:700px){
+  body{
+    align-items:center;
+  }
 }
-.flip-card.flipped{transform:rotateY(180deg)}
-.flip-front,.flip-back{
-position:absolute;width:100%;height:100%;
-border-radius:16px;
-display:flex;align-items:center;justify-content:center;
-backface-visibility:hidden;
-font-weight:600;padding:15px;text-align:center
-}
-.flip-front{background:#1a1f3a;border:1px solid #2e3b6b}
-.flip-back{transform:rotateY(180deg);background:#2c3e50;border:1px solid #5b7cff}
 </style>
 </head>
+
 <body>
 <div class="wrap">
 ${body}
 </div>
 </body>
-</html>`;
+</html>
+`
 }
+
 
 /* =============================
    ROUTES
