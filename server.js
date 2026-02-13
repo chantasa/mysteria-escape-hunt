@@ -223,11 +223,6 @@ app.get("/login", (req, res) => {
   `));
 });
 
-app.post("/login", (req, res) => {
-  let code = req.body.code.toUpperCase().trim();
-  if (!TEAM_CODES.includes(code)) return res.redirect("/login");
-  res.redirect(`/name/${code}`);
-});
 
 app.get("/name/:code", (req,res)=>{
   res.send(layout("Navn",`
