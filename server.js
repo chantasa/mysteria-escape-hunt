@@ -361,33 +361,49 @@ function layout(title, body, autoRefresh = false) {
 
 .chance-btn {
   position: relative;
-  background: linear-gradient(145deg, #13261f, #0b1612);
-  border: 2px solid #6ee7a8;
-  color: #6ee7a8;
+  background: linear-gradient(145deg, #0f1f1a, #0a1512);
+  border: 2px solid #5be7a3;
+  color: #5be7a3;
   overflow: hidden;
-  transition: all 0.25s ease;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
 }
 
-/* Blød indre glød */
-.chance-btn::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 30% 30%, rgba(110,231,168,0.25), transparent 60%);
-  opacity: 0.4;
-  transition: opacity 0.3s ease;
+/* Glødende kant */
+.chance-btn {
+  box-shadow:
+    0 0 0px rgba(91,231,163,0.0),
+    inset 0 0 10px rgba(91,231,163,0.05);
 }
 
-/* Hover – lidt liv */
 .chance-btn:hover {
-  box-shadow: 0 0 18px rgba(110,231,168,0.5);
+  box-shadow:
+    0 0 18px rgba(91,231,163,0.6),
+    inset 0 0 18px rgba(91,231,163,0.15);
   transform: translateY(-2px);
 }
 
-/* Hover gør energien stærkere */
-.chance-btn:hover::before {
-  opacity: 0.8;
+/* Subtil energilinje der bevæger sig */
+.chance-btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(91,231,163,0.25),
+    transparent
+  );
+  transition: left 0.6s ease;
 }
+
+.chance-btn:hover::after {
+  left: 100%;
+}
+
 
 
 /* === INPUT MED LABEL I RAMMEN === */
