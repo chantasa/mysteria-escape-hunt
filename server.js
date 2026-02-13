@@ -431,16 +431,21 @@ a {
 }
 
 .post-box.solved::after {
-  content: "✓";
+  content: "◆";   /* diamant-symbol */
   position: absolute;
   top: 8px;
   right: 10px;
-  background: #5bd37c;
-  color: #08110e;
+
+  background: linear-gradient(145deg, #f6d365, #d4b26a);
+  color: #1a1f1c;
+
   font-weight: bold;
-  font-size: 0.9rem;
-  padding: 4px 8px;
-  border-radius: 20px;
+  font-size: 0.8rem;
+
+  padding: 6px 8px;
+  border-radius: 50%;
+
+  box-shadow: 0 0 10px rgba(212,178,106,0.6);
 }
 
 /* HINT STYLING */
@@ -668,20 +673,40 @@ app.post("/post/:code/:postId/answer", (req, res) => {
   if (!team || !post) {
     return res.send("Fejl");
   }
+if (!team.postStates[post.id]) {
+  team.postStates[post.id] = {
+    hintsUsed: [],
+    answeredCorrect: false,
+    rewardChosen: false
+  };
+}
 
   const answer = (req.body.answer || "").toUpperCase().trim();
 
-  if (answer === post.correctAnswer.toUpperCase()) {
-    team.solvedPosts.push(post.id);
-    team.score += 100;
+if (answer === post.correctAnswer.toUpperCase()) {
 
-    return res.send(layout("Korrekt!", `
-      <div class="card">
-        <h2>Tillykke! I har fået 100 point.</h2>
-        <a href="/game/${code}"><button>Gå videre</button></a>
-      </div>
-    `));
-  }
+  team.postStates[post.id].answeredCorrect = true;
+
+  return res.send(layout("Korrekt!", `
+    <div class="card">
+      <h2>Korrekt!</h2>
+      <p>I har vundet <strong>100 point</strong>.</p>
+      <p>Vil I beholde dem… eller tage chancen?</p>
+    </div>
+
+    <div class="card">
+      <form method="POST" action="/post/${code}/${post.id}/keep">
+        <button class="answer-btn">Behold 100 point</button>
+      </form>
+
+      <br>
+
+      <form method="POST" action="/post/${code}/${post.id}/chance">
+        <button class="hint-btn">🎲 Tag chancen</button>
+      </form>
+    </div>
+  `));
+}
 
   team.score -= 5;
 
@@ -689,6 +714,34 @@ app.post("/post/:code/:postId/answer", (req, res) => {
     <div class="card">
       <h2>Forkert svar (-5 point)</h2>
       <a href="/post/${code}/${postId}"><button>Prøv igen</button></a>
+    </div>
+  `));
+});
+
+app.post("/post/:code/:postId/keep", (req, res) => {
+  const { code, postId } = req.params;
+  const team = teams[code];
+  const post = POSTS.find(p => p.id == postId);
+
+  if (!team || !post) return res.send("Fejl");
+
+  const state = team.postStates[post.id];
+
+  if (state.rewardChosen) {
+    return res.redirect(`/game/${code}`);
+  }
+
+  team.score += 100;
+  team.solvedPosts.push(post.id);
+  state.rewardChosen = true;
+
+  res.send(layout("Point modtaget", `
+    <div class="card">
+      <h2>Tillykke, I har fået jeres point.</h2>
+      <p>Gå videre til næste post.</p>
+      <a href="/game/${code}">
+        <button class="answer-btn">Tilbage til spillet</button>
+      </a>
     </div>
   `));
 });
