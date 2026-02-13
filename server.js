@@ -302,13 +302,27 @@ app.post("/post/:code/:id", (req, res) => {
   const post = POSTS.find(p => p.id == req.params.id);
   const answer = (req.body.answer || "").toUpperCase().trim();
 
+  if (team.solved.has(post.id)) {
+    return res.redirect(`/game/${req.params.code}`);
+  }
+
   if (answer === post.answer) {
-    team.score += 100;
-    team.solved.add(post.id);
     return res.send(layout("Korrekt", `
       <div class="card">
-        <h2>Tillykke! +100 point</h2>
-        <a href="/game/${req.params.code}"><button>Videre</button></a>
+        <h2>I har løst opgaven!</h2>
+        <p>Hvad vælger I?</p>
+
+        <form method="POST" action="/reward/${req.params.code}/${post.id}">
+          <input type="hidden" name="choice" value="safe">
+          <button>Vælg jeres 100 point</button>
+        </form>
+
+        <br>
+
+        <form method="POST" action="/reward/${req.params.code}/${post.id}">
+          <input type="hidden" name="choice" value="chance">
+          <button>Vælg chancen</button>
+        </form>
       </div>
     `));
   } else {
@@ -316,11 +330,98 @@ app.post("/post/:code/:id", (req, res) => {
     return res.send(layout("Forkert", `
       <div class="card">
         <h2>Forkert svar. -5 point</h2>
-        <a href="/post/${req.params.code}/${post.id}"><button>Prøv igen</button></a>
+        <a href="/post/${req.params.code}/${post.id}">
+          <button>Prøv igen</button>
+        </a>
       </div>
     `));
   }
 });
+app.post("/reward/:code/:id", (req, res) => {
+  const team = teams[req.params.code];
+  const post = POSTS.find(p => p.id == req.params.id);
+
+  if (team.solved.has(post.id)) {
+    return res.redirect(`/game/${req.params.code}`);
+  }
+
+  const choice = req.body.choice;
+
+  // SAFE VALG
+  if (choice === "safe") {
+    team.score += 100;
+    team.solved.add(post.id);
+
+    return res.send(layout("Point valgt", `
+      <div class="card">
+        <h2>+100 point</h2>
+        <a href="/game/${req.params.code}">
+          <button>Gå videre</button>
+        </a>
+      </div>
+    `));
+  }
+
+  // CHANCE VALG
+  if (choice === "chance") {
+
+    const roll = Math.random();
+    let message = "";
+    let points = 0;
+
+    if (roll < 0.5) {
+      points = 200;
+      message = "🎉 Tillykke! I fik dobbelt op – 200 point!";
+    }
+    else if (roll < 0.85) {
+      points = -50;
+      message = "💀 Desværre! I mistede 50 point.";
+    }
+    else {
+      // Stjæl fra nr 1 (eller nr 2 hvis man selv fører)
+      const sorted = Object.entries(teams)
+        .sort((a,b) => b[1].score - a[1].score);
+
+      let target = sorted[0];
+
+      if (target[0] === req.params.code && sorted.length > 1) {
+        target = sorted[1];
+      }
+
+      if (target) {
+        target[1].score -= 50;
+        team.score += 50;
+        message = `🏆 I stjal 50 point fra ${target[1].name}!`;
+      } else {
+        message = "Ingen at stjæle fra.";
+      }
+
+      team.solved.add(post.id);
+
+      return res.send(layout("Chance", `
+        <div class="card">
+          <h2>${message}</h2>
+          <a href="/game/${req.params.code}">
+            <button>Gå videre</button>
+          </a>
+        </div>
+      `));
+    }
+
+    team.score += points;
+    team.solved.add(post.id);
+
+    return res.send(layout("Chance", `
+      <div class="card">
+        <h2>${message}</h2>
+        <a href="/game/${req.params.code}">
+          <button>Gå videre</button>
+        </a>
+      </div>
+    `));
+  }
+});
+
 
 /* =============================
    GM DASHBOARD
