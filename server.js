@@ -407,8 +407,13 @@ function layout(title, body, autoRefresh = false) {
 .cards {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 16px;
-  margin-top: 20px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 10px;
 }
 
 .flip-card {
