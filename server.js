@@ -223,21 +223,21 @@ app.get("/login", (req, res) => {
   `));
 });
 
-
-app.get("/name/:code", (req,res)=>{
-  res.send(layout("Navn",`
-<div class="card">
-<h2>Indtast holdnavn</h2>
-<form method="POST">
-<input name="name" required>
-<button class="btn">Start</button>
-</form>
-</div>`))
-})
+app.get("/name/:code", (req, res) => {
+  res.send(layout("Navn", `
+    <div class="card">
+      <h2>Indtast holdnavn</h2>
+      <form method="POST">
+        <input name="name" required>
+        <button class="btn">Fortsæt</button>
+      </form>
+    </div>
+  `));
+});
 
 app.post("/name/:code",(req,res)=>{
   teams[req.params.code].name=req.body.name
-  res.redirect(`/game/${req.params.code}`)
+  res.redirect(`/game/${req.params.code}`);
 })
 
 app.get("/game/:code",(req,res)=>{
