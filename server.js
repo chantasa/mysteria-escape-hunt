@@ -538,6 +538,25 @@ post.hints.forEach((hintText, index) => {
   }
 });
 
+res.send(layout(post.title, `
+  <div class="card">
+    <h2>${post.title}</h2>
+    <div>Jeres point: <strong>${team.score}</strong></div>
+  </div>
+
+  ${hintHtml}
+
+  <div class="card">
+    <p>Her kommer opgaveteksten senere</p>
+    <form method="POST" action="/post/${code}/${post.id}/answer">
+      <input name="answer" required placeholder="Indtast svar"/>
+      <button>Svar</button>
+    </form>
+  </div>
+
+  <a href="/game/${code}"><button>Tilbage</button></a>
+`));
+});
 
 app.post("/post/:code/:postId/answer", (req, res) => {
   const { code, postId } = req.params;
