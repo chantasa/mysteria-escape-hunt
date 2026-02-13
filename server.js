@@ -212,16 +212,21 @@ function now() { return Date.now(); }
 
 function isRunning() {
   if (gameState.status !== "running") return false;
-  if (now() >= gameState.endTime) {
-    gameState.status = "ended";
-    return false;
-  }
+   
   return true;
 }
 
 function timeLeft() {
   if (gameState.status !== "running") return 0;
-  return Math.max(0, gameState.endTime - Date.now());
+
+  const remaining = gameState.endTime - Date.now();
+
+  if (remaining <= 0) {
+    gameState.status = "ended";
+    return 0;
+  }
+
+  return remaining;
 }
 
 function formatTime(ms) {
