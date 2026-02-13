@@ -15,31 +15,188 @@ const TEAM_CODES = Array.from({ length: 10 }, (_, i) => `HOLD${i + 1}`);
    POSTS
 ============================ */
 const POSTS = [
-  "Dragernes Dal",
-  "Den Dunkle Sti",
-  "Runernes Lysning",
-  "Den Tavse Kilde",
-  "Skyggernes Kreds",
-  "Måneporten",
-  "Den Glemte Høj",
-  "Skovens Puls",
-  "Den Brændte Eg",
-  "Stenvogternes Plads",
-  "Den Forladte Hytte",
-  "Elvernes Grænse",
-  "Tågernes Bro",
-  "Den Hule Klippe",
-  "Vildskovens Hjerte",
-  "Den Faldne Sten",
-  "Nordlysets Port",
-  "Den Knækkede Gren",
-  "Mørkets Spejl",
-  "Den Sidste Ring"
-].map((title, i) => ({
-  id: i + 1,
-  title,
-  correctAnswer: `SVAR${i + 1}`
-}));
+  {
+    id: 1,
+    title: "Dragernes Dal",
+    correctAnswer: "SVAR1",
+    hints: [
+      "Se efter noget, der ikke hører naturligt hjemme i dalen.",
+      "Drager beskytter ofte noget værdifuldt – hvad vogter denne?"
+    ]
+  },
+  {
+    id: 2,
+    title: "Den Dunkle Sti",
+    correctAnswer: "SVAR2",
+    hints: [
+      "Når lyset forsvinder, må I bruge andre sanser.",
+      "Stien skjuler noget i mørket – kig lavt."
+    ]
+  },
+  {
+    id: 3,
+    title: "Runernes Lysning",
+    correctAnswer: "SVAR3",
+    hints: [
+      "Runer skal læses i den rigtige rækkefølge.",
+      "Tæl symbolerne og omdan dem til tal."
+    ]
+  },
+  {
+    id: 4,
+    title: "Den Tavse Kilde",
+    correctAnswer: "SVAR4",
+    hints: [
+      "Vand taler, selv når det er stille.",
+      "Lyt – eller se på det, der spejler sig."
+    ]
+  },
+  {
+    id: 5,
+    title: "Skyggernes Kreds",
+    correctAnswer: "SVAR5",
+    hints: [
+      "Skygger ændrer sig med lyset.",
+      "Hvad danner de tilsammen?"
+    ]
+  },
+  {
+    id: 6,
+    title: "Måneporten",
+    correctAnswer: "SVAR6",
+    hints: [
+      "Månen har faser – hvilken er vigtig her?",
+      "Tænk i cirkler."
+    ]
+  },
+  {
+    id: 7,
+    title: "Den Glemte Høj",
+    correctAnswer: "SVAR7",
+    hints: [
+      "Gamle steder gemmer gamle hemmeligheder.",
+      "Se på det ældste element omkring jer."
+    ]
+  },
+  {
+    id: 8,
+    title: "Skovens Puls",
+    correctAnswer: "SVAR8",
+    hints: [
+      "Noget gentager sig i naturen.",
+      "Tæl rytmen."
+    ]
+  },
+  {
+    id: 9,
+    title: "Den Brændte Eg",
+    correctAnswer: "SVAR9",
+    hints: [
+      "Ilden efterlader spor.",
+      "Hvad overlevede flammerne?"
+    ]
+  },
+  {
+    id: 10,
+    title: "Stenvogternes Plads",
+    correctAnswer: "SVAR10",
+    hints: [
+      "Sten står ikke altid tilfældigt.",
+      "Se på deres placering."
+    ]
+  },
+  {
+    id: 11,
+    title: "Den Forladte Hytte",
+    correctAnswer: "SVAR11",
+    hints: [
+      "Selv tomme steder taler.",
+      "Hvad mangler?"
+    ]
+  },
+  {
+    id: 12,
+    title: "Elvernes Grænse",
+    correctAnswer: "SVAR12",
+    hints: [
+      "Grænser markerer overgange.",
+      "Hvad ændrer sig her?"
+    ]
+  },
+  {
+    id: 13,
+    title: "Tågernes Bro",
+    correctAnswer: "SVAR13",
+    hints: [
+      "Tåge skjuler detaljer.",
+      "Se under overfladen."
+    ]
+  },
+  {
+    id: 14,
+    title: "Den Hule Klippe",
+    correctAnswer: "SVAR14",
+    hints: [
+      "Hulrum kan forstærke lyd.",
+      "Er der et ekko?"
+    ]
+  },
+  {
+    id: 15,
+    title: "Vildskovens Hjerte",
+    correctAnswer: "SVAR15",
+    hints: [
+      "Midten er ofte vigtigst.",
+      "Find centrum."
+    ]
+  },
+  {
+    id: 16,
+    title: "Den Faldne Sten",
+    correctAnswer: "SVAR16",
+    hints: [
+      "Noget har bevæget sig.",
+      "Hvor lå det før?"
+    ]
+  },
+  {
+    id: 17,
+    title: "Nordlysets Port",
+    correctAnswer: "SVAR17",
+    hints: [
+      "Lyset bevæger sig i mønstre.",
+      "Hvilket mønster ser I?"
+    ]
+  },
+  {
+    id: 18,
+    title: "Den Knækkede Gren",
+    correctAnswer: "SVAR18",
+    hints: [
+      "Brud kan være et tegn.",
+      "Hvem – eller hvad – forårsagede det?"
+    ]
+  },
+  {
+    id: 19,
+    title: "Mørkets Spejl",
+    correctAnswer: "SVAR19",
+    hints: [
+      "Spejle vender ting på hovedet.",
+      "Skal I læse det bagfra?"
+    ]
+  },
+  {
+    id: 20,
+    title: "Den Sidste Ring",
+    correctAnswer: "SVAR20",
+    hints: [
+      "Ringe kan symbolisere afslutning.",
+      "Hvad forbinder begyndelsen og slutningen?"
+    ]
+  }
+];
+
 
 /* ============================
    STATE
