@@ -478,7 +478,7 @@ app.get("/post/:code/:postId", (req, res) => {
 
   if (!team || !post) return res.send("Fejl");
 
-  if (team.solvedPosts && team.solvedPosts.includes(post.id)) {
+  if (team.solvedPosts && team.solvedPosts.includes(post.id)) }
     return res.send(layout("Løst", `
       <div class="card">
         <h2>Denne opgave er allerede løst.</h2>
