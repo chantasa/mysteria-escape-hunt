@@ -571,7 +571,8 @@ app.get("/game/:code", (req, res) => {
       <div class="score">Jeres point: <strong>${team.score}</strong></div>
       <div>⏱ Tid tilbage: ${formatTime(remaining)}</div>
     </div>
-
+ </div>
+`));
     </a>
   `;
 }).join("");
