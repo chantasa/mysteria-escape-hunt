@@ -433,6 +433,9 @@ app.post("/teamname/:code", (req, res) => {
     chanceDeck: []
   };
 
+  res.redirect(`/intro/${req.params.code}`);
+});
+
 app.get("/intro/:code", (req, res) => {
   const team = teams[req.params.code];
   res.send(layout("Intro", `
