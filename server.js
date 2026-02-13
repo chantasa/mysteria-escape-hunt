@@ -293,6 +293,60 @@ function layout(title, body, autoRefresh = false) {
         border-radius:10px;
         cursor:pointer;
       }
+/* === FORM SPACING === */
+
+.answer-form {
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+/* === SVAR-KNAP (GRØN) === */
+
+.answer-btn {
+  background:#2f6b3c;
+  border:1px solid #5bd37c;
+  font-weight:600;
+}
+
+/* === HINT-KNAPPER (BLÅ) === */
+
+.hint-button button {
+  background:#2e3f5f;
+  border:1px solid #5f7bd4;
+}
+
+/* === TILBAGE-KNAP (RØDLIG) === */
+
+.back-btn {
+  background:#3a2a2a;
+  border:1px solid #a86c6c;
+}
+
+/* === INPUT MED LABEL I RAMMEN === */
+
+.input-wrapper {
+  position:relative;
+}
+
+.input-wrapper input {
+  width:100%;
+  padding:14px 10px;
+  background:#08110e;
+  border:1px solid #3f6b58;
+  border-radius:8px;
+  color:white;
+}
+
+.input-wrapper label {
+  position:absolute;
+  top:-10px;
+  left:12px;
+  background:#0f1b17;
+  padding:0 6px;
+  font-size:0.8rem;
+  color:#d4b26a;
+}
 
       input {
         padding:10px;
@@ -565,16 +619,21 @@ res.send(layout(post.title, `
   </div>
 
    <div class="card">
-    <p>Her kommer opgaveteksten senere</p>
-    <form method="POST" action="/post/${code}/${post.id}/answer">
-      <input name="answer" required placeholder="Indtast svar"/>
-      <button>Svar</button>
-    </form>
+    
+   <form class="answer-form" method="POST" action="/post/${code}/${post.id}/answer">
+  <div class="input-wrapper">
+    <label>Indtast svar</label>
+    <input name="answer" required />
+  </div>
+  <button class="answer-btn">Svar</button>
+</form>
   </div>
   
  ${hintHtml}
  
-  <a href="/game/${code}"><button>Tilbage</button></a>
+  <a href="/game/${code}">
+  <button class="back-btn">Tilbage</button>
+</a>
 `));
 });
 
