@@ -18,6 +18,7 @@ TEAM_CODES.forEach(code => {
     name: code,
     score: 50, // starter med 50 point
     solved: new Set()
+     chanceDeck: createChanceDeck()
   };
 });
 
@@ -131,6 +132,47 @@ ${body}
 </html>
 `;
 }
+
+/* =============================
+   CHANCE DECK FUNCTION
+============================= */
+
+function createChanceDeck(){
+
+  let baseDeck = [
+    "double",
+    "double",
+    "minus",
+    "minus",
+    "steal"
+  ]
+
+  function shuffle(array){
+    for(let i = array.length - 1; i > 0; i--){
+      let j = Math.floor(Math.random() * (i + 1))
+      ;[array[i], array[j]] = [array[j], array[i]]
+    }
+    return array
+  }
+
+  let deck
+  let valid = false
+
+  while(!valid){
+    deck = shuffle([...baseDeck])
+    valid = true
+
+    for(let i = 1; i < deck.length; i++){
+      if(deck[i] === "minus" && deck[i-1] === "minus"){
+        valid = false
+        break
+      }
+    }
+  }
+
+  return deck
+}
+
 
 /* ==============================
    PLAYER ROUTES
@@ -310,7 +352,7 @@ app.post("/post/:code/:id",(req,res)=>{
 // SAFE REWARD
 // ======================================
 
-app.get("/reward/:code/:id/safe",(req,res)=>{
+app.get("/reward/:code/:id/chance",(req,res)=>{
   let team = teams[req.params.code]
   if(!team) return res.redirect("/login")
 
@@ -321,10 +363,47 @@ app.get("/reward/:code/:id/safe",(req,res)=>{
     return res.redirect(`/game/${req.params.code}`)
   }
 
-  team.score += 100
+  // Hvis deck er tomt → lav nyt
+  if(!team.chanceDeck || team.chanceDeck.length === 0){
+    team.chanceDeck = createChanceDeck()
+  }
+
+  // Træk øverste kort
+  let result = team.chanceDeck.shift()
+
+  let text = ""
+
+  if(result === "double"){
+    team.score += 200
+    text = "Tillykke! I fik dobbelt op – +200 point!"
+  }
+
+  if(result === "minus"){
+    team.score -= 50
+    text = "Desværre! I mistede 50 point."
+  }
+
+  if(result === "steal"){
+    let leader = Object.values(teams).sort((a,b)=>b.score-a.score)[0]
+    if(leader && leader !== team){
+      leader.score -= 50
+      team.score += 50
+    }
+    text = "I har stjålet 50 point fra førerholdet!"
+  }
+
   team.solved.add(rewardKey)
 
-  res.redirect(`/game/${req.params.code}`)
+  res.send(layout("Chance", `
+    <div class="card">
+      <h2>Chancen er valgt</h2>
+      <p>${text}</p>
+      <br>
+      <a class="btn" href="/game/${req.params.code}">
+        Tilbage
+      </a>
+    </div>
+  `))
 })
 
 
