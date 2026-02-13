@@ -423,6 +423,18 @@ a {
   transform: translateY(-3px);
   border-color:#6ca889;
 }
+.post-box.solved {
+  opacity:0.6;
+  background:linear-gradient(145deg, #0d1512, #09100d);
+  border-color:#2e4a3d;
+}
+
+.solved-mark {
+  margin-top:8px;
+  font-size:1.2rem;
+  color:#5bd37c;
+}
+
 
 /* HINT STYLING */
 
@@ -540,14 +552,19 @@ app.get("/game/:code", (req, res) => {
 
   const team = teams[req.params.code];
 
-  const posts = POSTS.map(p => `
-  <a href="/post/${req.params.code}/${p.id}">
-    <div class="post-box">
-      <div class="post-number">${p.id}</div>
-      <div class="post-title">${p.title}</div>
-    </div>
-  </a>
-`).join("");
+const posts = POSTS.map(p => {
+  const isSolved = team.solvedPosts.includes(p.id);
+
+  return `
+    <a href="/post/${req.params.code}/${p.id}">
+      <div class="post-box ${isSolved ? "solved" : ""}">
+        <div class="post-number">${p.id}</div>
+        <div class="post-title">${p.title}</div>
+        ${isSolved ? '<div class="solved-mark">✓</div>' : ''}
+      </div>
+    </a>
+  `;
+}).join("");
 
   res.send(layout("Spil", `
     <div class="card">
