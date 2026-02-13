@@ -327,6 +327,49 @@ function layout(title, body, autoRefresh = false) {
   background:#3a2a2a;
   border:1px solid #a86c6c;
 }
+/* ===== REWARD CHOICE BUTTONS ===== */
+
+.reward-choice {
+  display:flex;
+  justify-content:center;
+  gap:30px;
+  margin-top:25px;
+  flex-wrap:wrap;
+}
+
+.reward-btn {
+  font-size:1.2rem;
+  padding:16px 28px;
+  border-radius:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:0.25s ease;
+}
+
+/* Behold point – gylden */
+.keep-btn {
+  background: linear-gradient(145deg, #c8a84a, #a8841e);
+  border: 2px solid #f0d77a;
+  color: #1a1300;
+}
+
+.keep-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(240, 215, 122, 0.6);
+}
+
+/* Chance – mørkere dramatisk */
+.chance-btn {
+  background: linear-gradient(145deg, #1f3a30, #0f1b17);
+  border: 2px solid #5bd37c;
+  color: #5bd37c;
+}
+
+.chance-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(91, 211, 124, 0.5);
+}
+
 
 /* === INPUT MED LABEL I RAMMEN === */
 
@@ -700,17 +743,20 @@ if (answer === post.correctAnswer.toUpperCase()) {
       <p>Vil I beholde dem… eller tage chancen?</p>
     </div>
 
-    <div class="card">
-      <form method="POST" action="/post/${code}/${post.id}/keep">
-        <button class="answer-btn">Behold 100 point</button>
-      </form>
+    <div class="reward-choice">
+  <form method="POST" action="/post/${code}/${post.id}/keep">
+    <button class="reward-btn keep-btn">
+      🏆 Behold 100 point
+    </button>
+  </form>
 
-      <br>
+  <form method="POST" action="/post/${code}/${post.id}/chance">
+    <button class="reward-btn chance-btn">
+      🎲 Tag chancen
+    </button>
+  </form>
+</div>
 
-      <form method="POST" action="/post/${code}/${post.id}/chance">
-        <button class="hint-btn">🎲 Tag chancen</button>
-      </form>
-    </div>
   `));
 }
 
