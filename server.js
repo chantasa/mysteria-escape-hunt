@@ -424,17 +424,24 @@ a {
   border-color:#6ca889;
 }
 .post-box.solved {
-  opacity:0.6;
-  background:linear-gradient(145deg, #0d1512, #09100d);
-  border-color:#2e4a3d;
+  opacity: 0.55;
+  background: linear-gradient(145deg, #0c1411, #070d0a);
+  border-color: #1e3028;
+  position: relative;
 }
 
-.solved-mark {
-  margin-top:8px;
-  font-size:1.2rem;
-  color:#5bd37c;
+.post-box.solved::after {
+  content: "✓";
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: #5bd37c;
+  color: #08110e;
+  font-weight: bold;
+  font-size: 0.9rem;
+  padding: 4px 8px;
+  border-radius: 20px;
 }
-
 
 /* HINT STYLING */
 
