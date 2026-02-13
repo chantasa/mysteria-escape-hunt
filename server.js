@@ -563,25 +563,25 @@ app.get("/game/:code", (req, res) => {
   }
 
   const team = teams[req.params.code];
-  const remaining = timeLeft();   // 👈 beregn kun én gang
+  const remaining = timeLeft();
+
+  const posts = POSTS.map(p => {
+    const solved = team.solvedPosts.includes(p.id);
+    return `
+      <a href="/post/${req.params.code}/${p.id}">
+        <div class="post-box ${solved ? "solved" : ""}">
+          <div class="post-number">${p.id}</div>
+          <div class="post-title">${p.title}</div>
+        </div>
+      </a>
+    `;
+  }).join("");
 
   res.send(layout("Spil", `
     <div class="card">
       <h1>${team.name}</h1>
       <div class="score">Jeres point: <strong>${team.score}</strong></div>
       <div>⏱ Tid tilbage: ${formatTime(remaining)}</div>
-    </div>
- </div>
-`));
-    </a>
-  `;
-}).join("");
-
-  res.send(layout("Spil", `
-    <div class="card">
-      <h1>${team.name}</h1>
-      <div class="score">Jeres point: <strong>${team.score}</strong></div>
-      <div>⏱ Tid tilbage: ${formatTime(timeLeft())}</div>
     </div>
 
     <div class="card">
@@ -592,6 +592,7 @@ app.get("/game/:code", (req, res) => {
     </div>
   `));
 });
+
 app.get("/post/:code/:postId", (req, res) => {
   const { code, postId } = req.params;
   const team = teams[code];
