@@ -404,6 +404,56 @@ function layout(title, body, autoRefresh = false) {
   left: 100%;
 }
 
+.card-grid {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.card-button {
+  background: none;
+  border: none;
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.card-inner {
+  width: 110px;
+  height: 160px;
+  position: relative;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.card-button:hover .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.card-front {
+  background: linear-gradient(145deg, #0f1b17, #162820);
+  border: 2px solid #d4b26a;
+  color: #d4b26a;
+}
+
+.card-back {
+  background: linear-gradient(145deg, #1f3a30, #14241d);
+  transform: rotateY(180deg);
+}
 
 
 /* === INPUT MED LABEL I RAMMEN === */
@@ -877,99 +927,105 @@ app.post("/post/:code/:postId/chance", (req, res) => {
     return res.redirect(`/game/${code}`);
   }
 
-  // 🎲 3 mulige udfald
-  const outcomes = ["double", "minus", "steal"];
-  const result = outcomes[Math.floor(Math.random() * outcomes.length)];
-
-  let message = "";
-
-  if (result === "double") {
-    team.score += 200;
-    message = "🎯 Dobbelt op! I får 200 point!";
+  // 🔥 Deck system
+  if (!team.chanceDeck || team.chanceDeck.length === 0) {
+    team.chanceDeck = createShuffledDeck();
   }
 
-  if (result === "minus") {
-    team.score -= 50;
-    message = "💀 Uheldigt! I mister 50 point.";
-  }
+  const cards = team.chanceDeck.slice(0, 3);
 
-  if (result === "steal") {
-
-    // find førende hold (undtagen jer selv)
-    const otherTeams = Object.entries(teams)
-      .filter(([c]) => c !== code);
-
-    if (otherTeams.length > 0) {
-
-      const leader = otherTeams
-        .sort((a, b) => b[1].score - a[1].score)[0][1];
-
-      const stealAmount = Math.min(50, leader.score);
-
-      leader.score -= stealAmount;
-      team.score += stealAmount;
-
-      message = `🗡 I stjal ${stealAmount} point fra det førende hold!`;
-    } else {
-      message = "Ingen at stjæle fra 😅";
-    }
-  }
-
-  team.solvedPosts.push(post.id);
-  state.rewardChosen = true;
-
-  res.send(layout("Chance!", `
+  res.send(layout("Tag chancen", `
     <div class="card">
-      <h2>${message}</h2>
-      <a href="/game/${code}">
-        <button class="answer-btn">Tilbage til spillet</button>
-      </a>
+      <h2>Vælg ét kort</h2>
+      <p>Kun ét kan vælges…</p>
     </div>
+
+    <div class="cards">
+      ${cards.map((type, i) => `
+        <div class="flip-card" data-type="${type}">
+          <div class="flip-inner">
+            <div class="card-front">?</div>
+            <div class="card-back">
+              ${type === "double" ? "🔥 Dobbelt op!" : ""}
+              ${type === "minus" ? "💀 Mist 50 point" : ""}
+              ${type === "steal" ? "🗡 Stjæl 50 point" : ""}
+            </div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+
+    <script>
+      const cards = document.querySelectorAll(".flip-card");
+      let chosen = false;
+
+      cards.forEach(card => {
+        card.addEventListener("click", () => {
+          if (chosen) return;
+
+          chosen = true;
+          card.classList.add("flipped");
+
+          cards.forEach(other => {
+            if (other !== card) {
+              other.classList.add("disabled");
+            }
+          });
+
+          const type = card.dataset.type;
+
+          fetch("/post/${code}/${post.id}/resolve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type })
+          }).then(() => {
+            setTimeout(() => {
+              window.location.href = "/game/${code}";
+            }, 2000);
+          });
+        });
+      });
+    </script>
   `));
 });
 
-
-app.post("/post/:code/:postId/chance", (req, res) => {
+app.post("/post/:code/:postId/resolve", express.json(), (req, res) => {
   const { code, postId } = req.params;
+  const { type } = req.body;
+
   const team = teams[code];
   const post = POSTS.find(p => p.id == postId);
+  const state = team.postStates[post.id];
 
   if (!team || !post) return res.send("Fejl");
 
-  const state = team.postStates[post.id];
+  let change = 0;
 
-  if (state.rewardChosen) {
-    return res.redirect(`/game/${code}`);
+  if (type === "double") change = 200;
+  if (type === "minus") change = -50;
+
+  if (type === "steal") {
+    const sorted = Object.values(teams)
+      .sort((a, b) => b.score - a.score);
+
+    const leader = sorted[0];
+
+    if (leader !== team) {
+      leader.score -= 50;
+      change = 50;
+    } else if (sorted[1]) {
+      sorted[1].score -= 50;
+      change = 50;
+    }
   }
 
-  const roll = Math.random();
-  let resultText = "";
-  let pointChange = 0;
-
-  if (roll < 0.5) {
-    pointChange = 200;
-    resultText = "🔥 Jackpot! I får 200 point!";
-  } else if (roll < 0.8) {
-    pointChange = 0;
-    resultText = "😅 Ingen gevinst denne gang.";
-  } else {
-    pointChange = -100;
-    resultText = "💀 Av! I mister 100 point!";
-  }
-
-  team.score += pointChange;
+  team.score += change;
   team.solvedPosts.push(post.id);
   state.rewardChosen = true;
 
-  res.send(layout("Chance resultat", `
-    <div class="card">
-      <h2>${resultText}</h2>
-      <p>Point ændring: <strong>${pointChange}</strong></p>
-      <a href="/game/${code}">
-        <button class="answer-btn">Tilbage til spillet</button>
-      </a>
-    </div>
-  `));
+  team.chanceDeck = team.chanceDeck.slice(3);
+
+  res.sendStatus(200);
 });
 
 /* ============================
