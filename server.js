@@ -407,18 +407,15 @@ function layout(title, body, autoRefresh = false) {
 .cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  justify-items: center;
+  gap: 12px;
   margin: 20px auto 0;
-  padding: 0 10px;
-  max-width: 360px; /* holder dem samlet på mobil */
+  max-width: 330px;   /* vigtig */
 }
 
 .flip-card {
-  width: 110px;
-  height: 160px;
+  width: 100%;
+  aspect-ratio: 3 / 4;
   perspective: 1000px;
-  flex: 0 0 auto;
 }
 
 .flip-inner {
