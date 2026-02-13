@@ -430,18 +430,16 @@ function layout(title, body, autoRefresh = false) {
   transform: rotateY(180deg);
 }
 
-.card-front,
-.card-back {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  backface-visibility: hidden;
+.card-front {
+  font-size: 1.8rem;
 }
+
+.card-back {
+  font-size: 0.9rem;
+  padding: 10px;
+  text-align: center;
+}
+
 
 .card-front {
   background: linear-gradient(145deg, #1f332a, #162820);
@@ -932,7 +930,7 @@ app.post("/post/:code/:postId/chance", (req, res) => {
   }
 
   // 🔥 Deck system
-  if (!team.chanceDeck || team.chanceDeck.length === 0) {
+if (!team.chanceDeck || team.chanceDeck.length < 3) {
     team.chanceDeck = createShuffledDeck();
   }
 
