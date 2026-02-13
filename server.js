@@ -370,6 +370,26 @@ a {
   border-color:#6ca889;
 }
 
+/* HINT STYLING */
+
+.hint-button {
+  display:flex;
+  justify-content:center;
+  margin-top:15px;
+}
+
+.hint-button button {
+  background:#2e3f5f;
+  border:1px solid #5f7bd4;
+  padding:10px 18px;
+}
+
+.hint-card {
+  background:#132a3a;
+  border:1px solid #2d6f89;
+  text-align:center;
+}
+
 
       .leaderboard li {
         margin-bottom:8px;
@@ -544,16 +564,16 @@ res.send(layout(post.title, `
     <div>Jeres point: <strong>${team.score}</strong></div>
   </div>
 
-  ${hintHtml}
-
-  <div class="card">
+   <div class="card">
     <p>Her kommer opgaveteksten senere</p>
     <form method="POST" action="/post/${code}/${post.id}/answer">
       <input name="answer" required placeholder="Indtast svar"/>
       <button>Svar</button>
     </form>
   </div>
-
+  
+ ${hintHtml}
+ 
   <a href="/game/${code}"><button>Tilbage</button></a>
 `));
 });
