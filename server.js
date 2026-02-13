@@ -53,47 +53,137 @@ function createChanceDeck(){
    UTIL
 ================================ */
 
-function layout(title,body){
-return `
+function layout(title, body) {
+  return `
 <!DOCTYPE html>
-<html>
+<html lang="da">
 <head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
+
 <style>
-body{margin:0;background:#0b0f12;color:#e9eef2;font-family:system-ui}
-.wrap{max-width:900px;margin:auto;padding:20px}
-.card{background:#121a20;border:1px solid #22313c;border-radius:14px;padding:20px;margin-bottom:20px}
-.btn{display:inline-block;padding:12px 16px;border-radius:12px;background:#1a2a35;color:#fff;border:none;text-decoration:none;margin:5px 0}
-.btn:hover{background:#203443}
-.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+* { box-sizing: border-box; }
+
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto;
+  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color:#ffffff;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:20px 15px;
+}
+
+.wrap{
+  width:100%;
+  max-width:480px;
+}
+
+.card{
+  background:rgba(255,255,255,0.06);
+  backdrop-filter: blur(6px);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+
+h1,h2,h3{
+  margin-top:0;
+}
+
+.btn{
+  display:inline-block;
+  padding:12px 18px;
+  border-radius:12px;
+  background:#1f3a56;
+  color:white;
+  text-decoration:none;
+  border:none;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.btn:hover{
+  background:#294b6d;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.2);
+  background:rgba(0,0,0,0.3);
+  color:white;
+  margin-bottom:10px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+
 .post-box{
-  background:#1c2630;
-  height:120px;
+  height:110px;
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
   border-radius:16px;
-  border:1px solid #2c3f4d;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.15);
   text-align:center;
   font-weight:600;
-  color:#ffffff;
+  color:white;
+  transition:0.25s;
 }
-.post-box:hover{background:#26323f}
-.solved{background:#214733}
-.muted{color:#aab7c4}
+
+.post-box:hover{
+  background:rgba(255,255,255,0.15);
+  transform:translateY(-3px);
+}
+
+.post-number{
+  font-size:18px;
+  font-weight:700;
+  opacity:0.7;
+  margin-bottom:6px;
+}
+
+.post-title{
+  font-size:15px;
+}
+
+.solved{
+  background:rgba(50,200,120,0.3);
+}
+
+.muted{
+  opacity:0.7;
+  font-size:14px;
+}
+
+@media (min-width:700px){
+  body{
+    align-items:center;
+  }
+}
 </style>
 </head>
+
 <body>
 <div class="wrap">
 ${body}
 </div>
 </body>
 </html>
-`;
+`
 }
+
 
 function timeLeft(){
   if(gameState.status!=="running")return 0;
