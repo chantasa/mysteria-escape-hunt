@@ -37,7 +37,8 @@ const POSTS = [
   "Den Sidste Ring"
 ].map((title, i) => ({
   id: i + 1,
-  title
+  title,
+  answer: `SVAR${i + 1}`
 }));
 
 /* =============================
@@ -73,9 +74,6 @@ function formatTime(ms) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-/* =============================
-   LAYOUT
-============================= */
 function layout(title, body, autoRefresh = false) {
   return `
   <html>
@@ -94,11 +92,7 @@ function layout(title, body, autoRefresh = false) {
         font-family: Georgia, serif;
       }
 
-      .container {
-        width:100%;
-        max-width:900px;
-        padding:20px;
-      }
+      .container { width:100%; max-width:900px; padding:20px; }
 
       .card {
         background:#0f1b17;
@@ -131,15 +125,7 @@ function layout(title, body, autoRefresh = false) {
         width:100%;
       }
 
-      .score {
-        font-size:1.1rem;
-        margin-top:10px;
-      }
-
-      a {
-        text-decoration:none;
-        color:inherit;
-      }
+      a { text-decoration:none; color:inherit; }
 
       .grid {
         display:grid;
@@ -163,9 +149,9 @@ function layout(title, body, autoRefresh = false) {
         transition:0.2s ease;
       }
 
-      .post-box:hover {
-        transform:translateY(-3px);
-        box-shadow:0 6px 18px rgba(0,0,0,0.6);
+      .post-box.solved {
+        background: linear-gradient(145deg, #2e4a3d, #1c3027);
+        border-color:#6ca889;
       }
 
       .post-inner {
@@ -176,21 +162,12 @@ function layout(title, body, autoRefresh = false) {
         text-align:center;
       }
 
-      .post-number {
-        font-size:1.2rem;
-        font-weight:700;
-        color:#d4b26a;
-      }
+      .post-number { font-size:1.2rem; font-weight:700; color:#d4b26a; }
+      .post-name { font-size:0.9rem; color:#fff6cc; }
 
-      .post-name {
-        font-size:0.9rem;
-        color:#fff6cc;
-      }
+      .score { font-size:1.1rem; margin-top:10px; }
 
-      .leaderboard li {
-        margin-bottom:6px;
-      }
-
+      .leaderboard li { margin-bottom:6px; }
     </style>
   </head>
   <body>
@@ -243,30 +220,14 @@ app.get("/teamname/:code", (req, res) => {
 app.post("/teamname/:code", (req, res) => {
   teams[req.params.code] = {
     name: req.body.name,
-    score: 50
+    score: 50,
+    solved: new Set()
   };
-  res.redirect(`/intro/${req.params.code}`);
-});
-
-app.get("/intro/:code", (req, res) => {
-  const team = teams[req.params.code];
-  res.send(layout("Intro", `
-    <div class="card">
-      <h1>Velkommen ${team.name}</h1>
-      <p>Kun de mest værdige vil samle flest point.</p>
-      <form method="POST">
-        <button>Træd ind i skoven</button>
-      </form>
-    </div>
-  `));
-});
-
-app.post("/intro/:code", (req, res) => {
   res.redirect(`/game/${req.params.code}`);
 });
 
 /* =============================
-   GAME
+   GAME OVERVIEW
 ============================= */
 
 app.get("/game/:code", (req, res) => {
@@ -278,28 +239,87 @@ app.get("/game/:code", (req, res) => {
 
   const team = teams[req.params.code];
 
-  const posts = POSTS.map((p) => `
-    <a href="#">
-      <div class="post-box">
-        <div class="post-inner">
-          <div class="post-number">${p.id}</div>
-          <div class="post-name">${p.title}</div>
+  const posts = POSTS.map((p) => {
+    const solved = team.solved.has(p.id);
+    return `
+      <a href="/post/${req.params.code}/${p.id}">
+        <div class="post-box ${solved ? "solved" : ""}">
+          <div class="post-inner">
+            <div class="post-number">${p.id}</div>
+            <div class="post-name">${p.title}</div>
+          </div>
         </div>
-      </div>
-    </a>
-  `).join("");
+      </a>
+    `;
+  }).join("");
 
   res.send(layout("Spil", `
     <div class="card">
       <h1>${team.name}</h1>
-      <div class="score">Jeres point: <strong>${team.score}</strong></div>
-      <div>⏱ Tid tilbage: ${formatTime(timeLeft())}</div>
+      <div class="score">Point: <strong>${team.score}</strong></div>
+      <div>⏱ ${formatTime(timeLeft())}</div>
     </div>
 
     <div class="grid">
       ${posts}
     </div>
   `));
+});
+
+/* =============================
+   POST PAGE
+============================= */
+
+app.get("/post/:code/:id", (req, res) => {
+  const team = teams[req.params.code];
+  const post = POSTS.find(p => p.id == req.params.id);
+
+  if (!post) return res.send("Post ikke fundet");
+
+  if (team.solved.has(post.id)) {
+    return res.send(layout("Løst", `
+      <div class="card">
+        <h2>Posten er allerede løst</h2>
+        <a href="/game/${req.params.code}"><button>Tilbage</button></a>
+      </div>
+    `));
+  }
+
+  res.send(layout(post.title, `
+    <div class="card">
+      <h2>${post.title}</h2>
+      <form method="POST">
+        <input name="answer" placeholder="Indtast svar"/>
+        <button>Send</button>
+      </form>
+      <a href="/game/${req.params.code}"><button>Tilbage</button></a>
+    </div>
+  `));
+});
+
+app.post("/post/:code/:id", (req, res) => {
+  const team = teams[req.params.code];
+  const post = POSTS.find(p => p.id == req.params.id);
+  const answer = (req.body.answer || "").toUpperCase().trim();
+
+  if (answer === post.answer) {
+    team.score += 100;
+    team.solved.add(post.id);
+    return res.send(layout("Korrekt", `
+      <div class="card">
+        <h2>Tillykke! +100 point</h2>
+        <a href="/game/${req.params.code}"><button>Videre</button></a>
+      </div>
+    `));
+  } else {
+    team.score -= 5;
+    return res.send(layout("Forkert", `
+      <div class="card">
+        <h2>Forkert svar. -5 point</h2>
+        <a href="/post/${req.params.code}/${post.id}"><button>Prøv igen</button></a>
+      </div>
+    `));
+  }
 });
 
 /* =============================
