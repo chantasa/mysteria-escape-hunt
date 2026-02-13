@@ -567,8 +567,7 @@ const posts = POSTS.map(p => {
       <div class="post-box ${isSolved ? "solved" : ""}">
         <div class="post-number">${p.id}</div>
         <div class="post-title">${p.title}</div>
-        ${isSolved ? '<div class="solved-mark">✓</div>' : ''}
-      </div>
+        </div>
     </a>
   `;
 }).join("");
