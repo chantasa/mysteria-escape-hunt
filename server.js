@@ -534,6 +534,39 @@ app.get("/post/:code/:postId", (req, res) => {
   `));
 });
 
+app.post("/post/:code/:postId/answer", (req, res) => {
+  const { code, postId } = req.params;
+  const team = teams[code];
+  const post = POSTS.find(p => p.id == postId);
+
+  if (!team || !post) {
+    return res.send("Fejl");
+  }
+
+  const answer = (req.body.answer || "").toUpperCase().trim();
+
+  if (answer === post.correctAnswer.toUpperCase()) {
+    team.solvedPosts.push(post.id);
+    team.score += 100;
+
+    return res.send(layout("Korrekt!", `
+      <div class="card">
+        <h2>Tillykke! I har fået 100 point.</h2>
+        <a href="/game/${code}"><button>Gå videre</button></a>
+      </div>
+    `));
+  }
+
+  team.score -= 5;
+
+  res.send(layout("Forkert", `
+    <div class="card">
+      <h2>Forkert svar (-5 point)</h2>
+      <a href="/post/${code}/${postId}"><button>Prøv igen</button></a>
+    </div>
+  `));
+});
+
 
 /* ============================
    GM DASHBOARD
