@@ -724,6 +724,38 @@ if (answer === post.correctAnswer.toUpperCase()) {
   `));
 });
 
+app.post("/post/:code/:postId/hint/:hintNumber", (req, res) => {
+  const { code, postId, hintNumber } = req.params;
+
+  const team = teams[code];
+  const post = POSTS.find(p => p.id == postId);
+
+  if (!team || !post) return res.send("Fejl");
+
+  const state = team.postStates[post.id];
+
+  const hintNum = parseInt(hintNumber);
+  const cost = hintNum === 1 ? 10 : 40;
+
+  // Hvis allerede købt → bare tilbage
+  if (state.hintsUsed.includes(hintNum)) {
+    return res.redirect(`/post/${code}/${postId}`);
+  }
+
+  // Hvis allerede svaret korrekt → må ikke købe hint
+  if (state.answeredCorrect) {
+    return res.redirect(`/post/${code}/${postId}`);
+  }
+
+  // Træk point
+  team.score -= cost;
+
+  // Gem at hint er brugt
+  state.hintsUsed.push(hintNum);
+
+  res.redirect(`/post/${code}/${postId}`);
+});
+
 app.post("/post/:code/:postId/keep", (req, res) => {
   const { code, postId } = req.params;
   const team = teams[code];
