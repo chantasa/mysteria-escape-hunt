@@ -235,24 +235,120 @@ app.post("/hint/:code/:id/:nr",(req,res)=>{
 });
 
 app.post("/post/:code/:id",(req,res)=>{
-  const team=teams[req.params.code];
-  const post=POSTS.find(p=>p.id==req.params.id);
-  const answer=req.body.answer?.toUpperCase().trim();
+  let team = teams[req.params.code]
+  let post = POSTS.find(p=>p.id==req.params.id)
+  let answer = req.body.answer?.toUpperCase().trim()
 
-  if(answer===post.answer){
-    team.solved.add(post.id);
-    team.score+=100;
-    return res.redirect("/game/"+req.params.code);
-  }else{
-    team.score-=5;
-    return res.send(layout("Forkert",`
+  if(!team || !post) return res.redirect("/")
+
+  if(answer === post.answer){
+
+    // Kun markér som løst
+    team.solved.add(post.id)
+
+    return res.send(layout("Korrekt", `
+      <div class="card">
+        <h2>Korrekt – I har løst opgaven!</h2>
+
+        <br>
+
+        <a class="btn" href="/reward/${req.params.code}/${post.id}/safe">
+          Vælg jeres 100 point
+        </a>
+
+        <br><br>
+
+        <a class="btn" href="/reward/${req.params.code}/${post.id}/chance">
+          Vælg chancen
+        </a>
+      </div>
+    `))
+
+  } else {
+
+    team.score -= 5
+
+    return res.send(layout("Forkert", `
       <div class="card">
         <h2>Forkert svar -5 point</h2>
-        <a class="btn" href="/post/${req.params.code}/${post.id}">Prøv igen</a>
+        <a class="btn" href="/post/${req.params.code}/${post.id}">
+          Prøv igen
+        </a>
       </div>
-    `));
+    `))
   }
-});
+})
+
+app.get("/reward/:code/:id/safe",(req,res)=>{
+  let team = teams[req.params.code]
+  if(!team) return res.redirect("/login")
+
+  let rewardKey = req.params.id + "_rewarded"
+
+  if(team.solved.has(rewardKey)){
+    return res.redirect(`/game/${req.params.code}`)
+  }
+
+  team.score += 100
+  team.solved.add(rewardKey)
+
+  res.redirect(`/game/${req.params.code}`)
+})
+
+app.get("/reward/:code/:id/chance",(req,res)=>{
+  let team = teams[req.params.code]
+  if(!team) return res.redirect("/login")
+
+  const options = [
+    { type:"double", weight:40 },
+    { type:"minus", weight:30 },
+    { type:"steal", weight:20 }
+  ]
+
+  let total = options.reduce((a,b)=>a+b.weight,0)
+  let r = Math.random()*total
+  let result
+
+  for(let opt of options){
+    if(r < opt.weight){
+      result = opt.type
+      break
+    }
+    r -= opt.weight
+  }
+
+  let text = ""
+
+  if(result === "double"){
+    team.score += 200
+    text = "Tillykke! I fik dobbelt op – +200 point!"
+  }
+
+  if(result === "minus"){
+    team.score -= 50
+    text = "Desværre! I mistede 50 point."
+  }
+
+  if(result === "steal"){
+    let leader = Object.values(teams).sort((a,b)=>b.score-a.score)[0]
+    if(leader && leader !== team){
+      leader.score -= 50
+      team.score += 50
+    }
+    text = "I har stjålet 50 point fra førerholdet!"
+  }
+
+  res.send(layout("Chance", `
+    <div class="card">
+      <h2>Chancen er valgt</h2>
+      <p>${text}</p>
+      <br>
+      <a class="btn" href="/game/${req.params.code}">
+        Tilbage
+      </a>
+    </div>
+  `))
+})
 
 
 /* =============================
