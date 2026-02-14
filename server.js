@@ -263,15 +263,13 @@ function layout(title, body, autoRefresh = false) {
     ${autoRefresh ? `<meta http-equiv="refresh" content="5">` : ""}
     <title>${title}</title>
     <style>
-      body {
-        margin:0;
-        min-height:100vh;
-        display:flex;
-        justify-content:center;
-        background: radial-gradient(circle at top, #0f1b17, #060a08);
-        color: #f2e8c8;
-        font-family: "Georgia", serif;
-      }
+     body {
+  margin:0;
+  min-height:100vh;
+  background: radial-gradient(circle at top, #0f1b17, #060a08);
+  color:#f2e8c8;
+  font-family: "Georgia", serif;
+}
 
      .container {
   width: 100%;
