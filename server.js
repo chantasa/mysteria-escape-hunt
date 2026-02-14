@@ -406,17 +406,16 @@ function layout(title, body, autoRefresh = false) {
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, 100px);  /* fast bredde */
+  gap: 14px;
 
-  width: fit-content;      /* 🔥 nøgle */
-  margin: 20px auto 0;     /* center */
+  justify-content: center;   /* centrer grid */
+  margin-top: 20px;
 }
 
 .flip-card {
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  perspective: 1000px;
+  width: 100px;
+  height: 150px;
 }
 
 .flip-inner {
