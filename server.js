@@ -408,8 +408,9 @@ function layout(title, body, autoRefresh = false) {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  margin: 20px auto 0;
-  max-width: 330px;   /* vigtig */
+
+  width: fit-content;      /* 🔥 nøgle */
+  margin: 20px auto 0;     /* center */
 }
 
 .flip-card {
