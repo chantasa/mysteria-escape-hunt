@@ -405,12 +405,12 @@ function layout(title, body, autoRefresh = false) {
 }
 
 .cards {
-  display: grid;
-  grid-template-columns: repeat(3, 100px);  /* fast bredde */
+  display: flex;
+  justify-content: center;   /* centrer horisontalt */
+  align-items: center;
   gap: 14px;
-
-  justify-content: center;   /* centrer grid */
   margin-top: 20px;
+  width: 100%;
 }
 
 .flip-card {
