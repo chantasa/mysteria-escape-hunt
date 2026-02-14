@@ -273,11 +273,12 @@ function layout(title, body, autoRefresh = false) {
         font-family: "Georgia", serif;
       }
 
-      .container {
-        width:100%;
-        max-width:1100px;
-        padding:20px;
-      }
+     .container {
+  width: 100%;
+  max-width: 1100px;
+  padding: 20px;
+  margin: 0 auto;   
+}
 
       .card {
         background:#0f1b17;
