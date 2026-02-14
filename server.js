@@ -259,7 +259,7 @@ function layout(title, body, autoRefresh = false) {
   return `
   <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     ${autoRefresh ? `<meta http-equiv="refresh" content="5">` : ""}
     <title>${title}</title>
     <style>
